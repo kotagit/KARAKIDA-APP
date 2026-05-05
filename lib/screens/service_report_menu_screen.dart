@@ -4,7 +4,7 @@ import 'service_report_screen.dart';
 class ServiceReportMenuScreen extends StatelessWidget {
   const ServiceReportMenuScreen({super.key});
 
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class ServiceReportMenuScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _primaryBlue, width: 2),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
@@ -76,18 +76,18 @@ class ServiceReportMenuScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: _primaryBlue, size: 28),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
             const SizedBox(width: 16),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: _primaryBlue,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: _primaryBlue),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
           ],
         ),
       ),

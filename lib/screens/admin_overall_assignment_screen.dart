@@ -20,7 +20,7 @@ class AdminOverallAssignmentScreen extends StatefulWidget {
 
 class _AdminOverallAssignmentScreenState
     extends State<AdminOverallAssignmentScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   List<Map<String, String>> _assignments = [];
   List<String> _groupMembers = [];
@@ -242,10 +242,10 @@ class _AdminOverallAssignmentScreenState
                   height: 40,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected ? _primaryBlue : Colors.white,
-                      foregroundColor: isSelected ? Colors.white : _primaryBlue,
+                      backgroundColor: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                      foregroundColor: isSelected ? Colors.white : Theme.of(context).colorScheme.primary,
                       padding: EdgeInsets.zero,
-                      side: const BorderSide(color: _primaryBlue, width: 2),
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -305,15 +305,15 @@ class _AdminOverallAssignmentScreenState
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: _primaryBlue.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '区域No.$territory (${cards.length}カード)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: _primaryBlue,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -350,14 +350,14 @@ class _AdminOverallAssignmentScreenState
                                 children: [
                                   Text(
                                     cardName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF047CBC),
+                                      color: Theme.of(context).colorScheme.primary,
                                       decoration: TextDecoration.underline,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.open_in_new, size: 14, color: Color(0xFF047CBC)),
+                                  SizedBox(width: 4),
+                                  Icon(Icons.open_in_new, size: 14, color: Theme.of(context).colorScheme.primary),
                                 ],
                               ),
                             ),
@@ -375,7 +375,7 @@ class _AdminOverallAssignmentScreenState
                                   color: currentMember == '未割当て'
                                       ? Colors.grey
                                       : currentMember == 'グループ区域'
-                                          ? _primaryBlue
+                                          ? Theme.of(context).colorScheme.primary
                                           : (isChanged ? Colors.orange.shade800 : Colors.black),
                                   fontWeight: isChanged ? FontWeight.bold : FontWeight.normal,
                                 ),

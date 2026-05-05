@@ -12,7 +12,7 @@ class AdminPublicWitnessingScreen extends StatefulWidget {
 
 class _AdminPublicWitnessingScreenState
     extends State<AdminPublicWitnessingScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   bool _saving = false;
@@ -218,7 +218,7 @@ class _AdminPublicWitnessingScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: _primaryBlue,
+        color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -272,11 +272,11 @@ class _AdminPublicWitnessingScreenState
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 36,
               child: Icon(
                 Icons.access_time,
-                color: _primaryBlue,
+                color: Theme.of(context).colorScheme.primary,
                 size: 22,
               ),
             ),

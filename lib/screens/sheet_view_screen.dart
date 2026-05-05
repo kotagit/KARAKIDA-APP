@@ -73,6 +73,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
   @override
   Widget build(BuildContext context) {
     final sheets = context.watch<SheetsProvider>();
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,24 +191,24 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          color: const Color(0xFF047CBC).withOpacity(0.15),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                           child: Row(
                             children: [
                               if (mapLink != null && mapLink.isNotEmpty)
                                 GestureDetector(
                                   onTap: () => _openLink(mapLink),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.only(right: 6),
-                                    child: Icon(Icons.location_on, color: Color(0xFFF1C232), size: 20),
+                                    child: Icon(Icons.location_on, color: Theme.of(context).colorScheme.secondary, size: 20),
                                   ),
                                 ),
                               Expanded(
                                 child: Text(
                                   item.label!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: Color(0xFF047CBC),
+                                    color: Theme.of(context).colorScheme.tertiary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -309,10 +310,10 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
                                     height: _sectionRowHeight,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      color: const Color(0xFF047CBC).withOpacity(0.15),
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                                       child: Text(
                                         item.label!,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF047CBC)),
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.tertiary),
                                       ),
                                     ),
                                   );
@@ -363,7 +364,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
 
     return Container(
       padding: const EdgeInsets.all(12),
-      color: const Color(0xFF047CBC).withOpacity(0.1),
+      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -384,8 +385,8 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
             icon: Icon(_showHistory ? Icons.visibility_off : Icons.history, size: 18),
             label: const Text('履歴', style: TextStyle(fontSize: 13)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _showHistory ? const Color(0xFFF1C232) : Colors.white,
-              foregroundColor: _showHistory ? Colors.white : const Color(0xFF047CBC),
+              backgroundColor: _showHistory ? Theme.of(context).colorScheme.secondary : Colors.white,
+              foregroundColor: _showHistory ? Colors.white : Theme.of(context).colorScheme.primary,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -454,7 +455,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     final townName = addr['townName'] as String? ?? '';
     const String displayNo = '';
     final townChome = townName + chome;
-    final displayLabel = [townChome, gaiku, no].where((s) => s.isNotEmpty).join('-');
+    final rawLabel = [townChome, gaiku, no].where((s) => s.isNotEmpty).join('-');
+    final houseName = addr['targetName'] as String? ?? '';
+    final displayLabel = houseName.isNotEmpty ? '$rawLabel（$houseName）' : rawLabel;
     final status = _getCurrentStatus(addr, visitId);
     final mapLink = addr['mapLink'] as String?;
     final color = addr['color'] as int?;
@@ -481,9 +484,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
             if (mapLink != null && mapLink.isNotEmpty)
               GestureDetector(
                 onTap: () => _openLink(mapLink),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.only(left: 6, right: 4),
-                  child: Icon(Icons.location_on, color: Color(0xFFF1C232), size: 26),
+                  child: Icon(Icons.location_on, color: Theme.of(context).colorScheme.secondary, size: 26),
                 ),
               )
             else
@@ -500,7 +503,14 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
                 children: [
                   if (buildName.isNotEmpty)
                     Text(buildName, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
-                  Text(displayLabel, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
+                  Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: rawLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      if (houseName.isNotEmpty)
+                        TextSpan(text: '（$houseName）', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal)),
+                    ]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

@@ -17,7 +17,7 @@ class ServiceReportScreen extends StatefulWidget {
 }
 
 class _ServiceReportScreenState extends State<ServiceReportScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   static const List<String> _roles = ['伝道者', '補助開拓者', '正規開拓者'];
 
@@ -272,10 +272,10 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Icon(Icons.send),
+                    : Icon(Icons.send),
                 label: Text(_isSubmitting ? '送信中...' : '送信する'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryBlue,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -369,7 +369,7 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: _primaryBlue, width: 1.5),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
       ),
     );
   }
@@ -418,10 +418,10 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                               width: 80,
                               child: Text(
                                 e.key,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: _primaryBlue,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -445,7 +445,7 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryBlue,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),

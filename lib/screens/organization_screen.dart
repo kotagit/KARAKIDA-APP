@@ -14,7 +14,7 @@ class OrganizationScreen extends StatefulWidget {
 }
 
 class _OrganizationScreenState extends State<OrganizationScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
   static const double _baseCellHeight = 30.0;
   static const double _baseColWidth = 60.0;
   double _scale = 1.0;
@@ -156,9 +156,9 @@ class _OrganizationScreenState extends State<OrganizationScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: ChoiceChip(
-                        label: Text(name, style: const TextStyle(fontSize: 12)),
+                        label: Text(name, style: TextStyle(fontSize: 12)),
                         selected: isSelected,
-                        selectedColor: _primaryBlue,
+                        selectedColor: Theme.of(context).colorScheme.primary,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : Colors.black87,
                         ),

@@ -30,7 +30,7 @@ class AdminPublicWitnessingAssignmentScreen extends StatefulWidget {
 
 class _AdminPublicWitnessingAssignmentScreenState
     extends State<AdminPublicWitnessingAssignmentScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
   late Map<String, Map<String, dynamic>> _assignments;
   bool _saving = false;
 

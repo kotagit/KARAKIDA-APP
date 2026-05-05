@@ -13,7 +13,7 @@ class AreaInfoRegistrationScreen extends StatefulWidget {
 
 class _AreaInfoRegistrationScreenState
     extends State<AreaInfoRegistrationScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
@@ -115,7 +115,7 @@ class _AreaInfoRegistrationScreenState
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryBlue,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -135,10 +135,10 @@ class _AreaInfoRegistrationScreenState
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: _primaryBlue,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 2),
@@ -212,10 +212,10 @@ class _AreaInfoRegistrationScreenState
                     SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.send),
+                        icon: Icon(Icons.send),
                         label: const Text('送信する'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryBlue,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
                         onPressed: _submit,
@@ -242,13 +242,13 @@ class _AreaInfoRegistrationScreenState
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: _primaryBlue),
+        prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _primaryBlue, width: 2),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
         ),
       ),
       validator: required

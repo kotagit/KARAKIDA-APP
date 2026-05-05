@@ -10,7 +10,7 @@ import 'application_screen.dart';
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +43,7 @@ class AdminScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (sheets.isCho) ...[
-              _buildSectionTag('司会者'),
+              _buildSectionTag(context, '司会者'),
               const SizedBox(height: 8),
               _buildMenuButton(
                 context,
@@ -68,7 +68,7 @@ class AdminScreen extends StatelessWidget {
               const SizedBox(height: 24),
             ],
             if (sheets.isAdmin) ...[
-              _buildSectionTag('取決め策定者'),
+              _buildSectionTag(context, '取決め策定者'),
               const SizedBox(height: 8),
               _buildMenuButton(
                 context,
@@ -82,7 +82,7 @@ class AdminScreen extends StatelessWidget {
               const SizedBox(height: 24),
             ],
             if (sheets.isTerritoryServant) ...[
-              _buildSectionTag('区域係'),
+              _buildSectionTag(context, '区域係'),
               const SizedBox(height: 8),
               _buildMenuButton(
                 context,
@@ -131,13 +131,13 @@ class AdminScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTag(String label) {
+  Widget _buildSectionTag(BuildContext context, String label) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -165,7 +165,7 @@ class AdminScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _primaryBlue, width: 2),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
@@ -176,18 +176,18 @@ class AdminScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: _primaryBlue, size: 28),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
             const SizedBox(width: 16),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF047CBC),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: Color(0xFF047CBC)),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
           ],
         ),
       ),

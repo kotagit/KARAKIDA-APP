@@ -167,10 +167,10 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
         bottom: TabBar(
           controller: _tabController,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
+          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white.withOpacity(0.7),
-          indicatorColor: const Color(0xFFF1C232),
+          indicatorColor: Theme.of(context).colorScheme.secondary,
           indicatorWeight: 4,
           indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
@@ -219,9 +219,9 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: Color(0xFF047CBC), width: 6),
+                  left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 6),
                 ),
               ),
               child: Padding(
@@ -233,20 +233,20 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF047CBC).withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF047CBC)),
+                          Icon(Icons.calendar_today_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 6),
                           Text(
                             date,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF047CBC),
+                              color: Theme.of(context).colorScheme.tertiary,
                             ),
                           ),
                         ],
@@ -284,10 +284,10 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                               icon: const Icon(Icons.description_rounded, size: 18),
                               label: Text(
                                 link['label']!,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF1C232),
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
                                 foregroundColor: const Color(0xFF1E293B),
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

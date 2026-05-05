@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'providers/sheets_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/service_report_screen.dart';
@@ -31,20 +32,23 @@ class KarakidaApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => SheetsProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp(
         title: '唐木田会衆アプリ',
         navigatorKey: rootNavigatorKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF047CBC),
-            primary: const Color(0xFF047CBC),
-            secondary: const Color(0xFFF1C232),
+            seedColor: themeProvider.primaryColor,
+            primary: themeProvider.primaryColor,
+            secondary: themeProvider.accentColor,
+            tertiary: themeProvider.textColor,
           ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF047CBC),
+          appBarTheme: AppBarTheme(
+            backgroundColor: themeProvider.primaryColor,
             foregroundColor: Colors.white,
           ),
         ),
@@ -55,6 +59,7 @@ class KarakidaApp extends StatelessWidget {
           child: _ServiceReportBannerWrapper(child: child!),
         ),
         home: const AuthGate(),
+      ),
       ),
     );
   }
@@ -93,9 +98,8 @@ class _AuthGateState extends State<AuthGate> {
       if (sheets.currentUserEmail == null && auth.currentUser?.email != null) {
         final email = auth.currentUser!.email!;
         debugPrint('AuthGate: Signed in, but user data missing. Fetching Firestore for $email...');
-        
-        // 非同期でFirestoreチェックを実行
         sheets.loadAccessControl(email);
+        context.read<ThemeProvider>().loadSettings(email);
       }
     }
   }

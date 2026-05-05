@@ -13,7 +13,7 @@ class ApplicationScreen extends StatefulWidget {
 }
 
 class _ApplicationScreenState extends State<ApplicationScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -105,10 +105,10 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                     children: [
                       Text(
                         '${item.date} (${item.weekday}) ${item.startTime}〜${item.endTime}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: _primaryBlue,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -130,7 +130,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryBlue,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -276,14 +276,14 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.send),
+              icon: Icon(Icons.send),
               label: Text(
                 _selectedKeys.isEmpty
                     ? '送信する'
                     : '送信する（${_selectedKeys.length}件）',
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryBlue,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
               ),
               onPressed: _submit,
@@ -323,7 +323,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
@@ -359,13 +359,13 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? _primaryBlue : Colors.grey.shade300,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
             width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? _primaryBlue.withOpacity(0.10)
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.10)
                   : Colors.black.withOpacity(0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
@@ -384,7 +384,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                     isSelected
                         ? Icons.check_circle
                         : Icons.check_circle_outline,
-                    color: isSelected ? _primaryBlue : Colors.grey.shade400,
+                    color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade400,
                     size: 22,
                   ),
                 ),
@@ -461,14 +461,14 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                                 ? Icons.radio_button_checked
                                 : Icons.radio_button_off,
                             size: 20,
-                            color: isRoleSelected ? _primaryBlue : Colors.grey,
+                            color: isRoleSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10),
                           Text(
                             role,
                             style: TextStyle(
                               fontSize: 14,
-                              color: isRoleSelected ? _primaryBlue : Colors.black87,
+                              color: isRoleSelected ? Theme.of(context).colorScheme.primary : Colors.black87,
                               fontWeight: isRoleSelected ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),

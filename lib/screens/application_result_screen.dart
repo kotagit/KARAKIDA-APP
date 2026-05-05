@@ -14,7 +14,7 @@ class ApplicationResultScreen extends StatefulWidget {
 }
 
 class _ApplicationResultScreenState extends State<ApplicationResultScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -211,7 +211,7 @@ class _ApplicationResultScreenState extends State<ApplicationResultScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
@@ -224,10 +224,10 @@ class _ApplicationResultScreenState extends State<ApplicationResultScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _primaryBlue, width: 2.0),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2.0),
         boxShadow: [
           BoxShadow(
-            color: _primaryBlue.withOpacity(0.10),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -297,7 +297,7 @@ class _ApplicationResultScreenState extends State<ApplicationResultScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 11,
-                        color: _primaryBlue,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

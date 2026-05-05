@@ -9,7 +9,7 @@ class PublicWitnessingTableScreen extends StatefulWidget {
 }
 
 class _PublicWitnessingTableScreenState extends State<PublicWitnessingTableScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
   static const double _colWidth = 110.0;
   bool _loading = true;
   String? _error;
@@ -164,13 +164,13 @@ class _PublicWitnessingTableScreenState extends State<PublicWitnessingTableScree
                 color: isWeekend ? Colors.red.shade700 : Colors.black87,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
           ],
-          const Icon(Icons.access_time, size: 18, color: _primaryBlue),
-          const SizedBox(width: 4),
+          Icon(Icons.access_time, size: 18, color: Theme.of(context).colorScheme.primary),
+          SizedBox(width: 4),
           Text(
             slot.time,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: 12),
           const Icon(Icons.location_on_outlined, size: 18, color: Colors.grey),
@@ -266,14 +266,14 @@ class _PublicWitnessingTableScreenState extends State<PublicWitnessingTableScree
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Colors.white,
-              border: isLast ? null : const Border(right: BorderSide(color: Colors.black, width: 1.0)),
+              border: isLast ? null : Border(right: BorderSide(color: Colors.black, width: 1.0)),
             ),
             child: Text(
               name ?? '',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isConductor ? FontWeight.bold : FontWeight.normal,
-                color: isConductor ? _primaryBlue : Colors.black87,
+                color: isConductor ? Theme.of(context).colorScheme.primary : Colors.black87,
               ),
             ),
           );

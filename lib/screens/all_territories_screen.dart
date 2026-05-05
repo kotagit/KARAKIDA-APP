@@ -12,7 +12,7 @@ class AllTerritoriesScreen extends StatefulWidget {
 }
 
 class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -144,7 +144,7 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -178,14 +178,14 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _primaryBlue, width: 1.5),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
         ),
         child: Text(
           territory,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: _primaryBlue,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),

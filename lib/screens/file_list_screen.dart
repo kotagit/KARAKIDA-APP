@@ -13,7 +13,7 @@ class FileListScreen extends StatefulWidget {
 }
 
 class _FileListScreenState extends State<FileListScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -203,10 +203,10 @@ class _FileListScreenState extends State<FileListScreen> {
                           Expanded(
                             child: Text(
                               _formatCardName(cardName),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: _primaryBlue,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -262,15 +262,15 @@ class _FileListScreenState extends State<FileListScreen> {
                           horizontal: 12, vertical: 14),
                       child: Row(
                         children: [
-                          const Icon(Icons.map_outlined, color: _primaryBlue),
+                          Icon(Icons.map_outlined, color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _formatCardName(cardName),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: _primaryBlue,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -294,7 +294,7 @@ class _FileListScreenState extends State<FileListScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(

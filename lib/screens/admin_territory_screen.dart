@@ -20,7 +20,7 @@ class AdminTerritoryScreen extends StatefulWidget {
 }
 
 class _AdminTerritoryScreenState extends State<AdminTerritoryScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   List<String> _territories = [];
   Set<String> _fullyAssignedTerritories = {};
@@ -205,7 +205,7 @@ class _AdminTerritoryScreenState extends State<AdminTerritoryScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _primaryBlue, width: 2),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
@@ -216,18 +216,18 @@ class _AdminTerritoryScreenState extends State<AdminTerritoryScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: _primaryBlue, size: 28),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
             const SizedBox(width: 16),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF047CBC),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: Color(0xFF047CBC)),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
           ],
         ),
       ),
@@ -243,9 +243,9 @@ class _AdminTerritoryScreenState extends State<AdminTerritoryScreen> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: _primaryBlue,
+          foregroundColor: Theme.of(context).colorScheme.primary,
           side: BorderSide(
-            color: _primaryBlue,
+            color: Theme.of(context).colorScheme.primary,
             width: 2,
           ),
           shape: RoundedRectangleBorder(
@@ -271,7 +271,7 @@ class _AdminTerritoryScreenState extends State<AdminTerritoryScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: _primaryBlue,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),

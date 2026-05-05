@@ -7,6 +7,7 @@ import 'senkyo_menu_screen.dart';
 import 'application_menu_screen.dart';
 import 'announcement_screen.dart';
 import 'admin_screen.dart';
+import 'color_settings_screen.dart';
 
 class MenuItem {
   final String label;
@@ -27,7 +28,6 @@ class MenuItem {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const Color _primaryBlue = Color(0xFF047CBC);
 
   List<MenuItem> _getMenuItems(bool isAdmin) => [
         const MenuItem(
@@ -64,6 +64,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final sheets = context.watch<SheetsProvider>();
+    final cs = Theme.of(context).colorScheme;
     final menuItems = _getMenuItems(sheets.isAdmin);
 
     return Scaffold(
@@ -87,6 +88,14 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+          IconButton(
+            icon: const Icon(Icons.palette_outlined),
+            tooltip: 'カラー設定',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ColorSettingsScreen()),
+            ),
+          ),
         ],
       ),
       body: Padding(
@@ -106,7 +115,7 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: Container(
-        color: _primaryBlue,
+        color: cs.primary,
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
@@ -191,7 +200,8 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMenuCard(BuildContext context, MenuItem item) {
     final bool isEnabled = item.destination != null;
-    final Color activeColor = isEnabled ? (item.color ?? _primaryBlue) : Colors.grey.shade400;
+    final cs = Theme.of(context).colorScheme;
+    final Color activeColor = isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400;
 
     return GestureDetector(
       onTap: isEnabled
@@ -207,7 +217,7 @@ class HomeScreen extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isEnabled ? (item.color ?? _primaryBlue) : Colors.grey.shade300,
+            color: isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade300,
             width: 2,
           ),
           boxShadow: [

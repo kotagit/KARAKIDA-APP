@@ -21,8 +21,8 @@ class TerritoryDetailScreen extends StatefulWidget {
 }
 
 class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
-  static const Color _accentYellow = Color(0xFFF1C232);
+  
+  
 
   List<String> _cardMembers = [];
   List<Map<String, dynamic>> _cardFiles = [];
@@ -247,13 +247,13 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh, size: 24),
+                    icon: Icon(Icons.refresh, size: 24),
                     label: const Text(
                       '再割当てを行う',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _accentYellow,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 4,
@@ -297,10 +297,10 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.save, size: 24),
+                icon: Icon(Icons.save, size: 24),
                 label: const Text('保存して反映する', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _accentYellow,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 4,
@@ -354,11 +354,11 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
                       child: Row(
                         children: [
                           Image.asset('assets/APP_LOGO_02.png', width: 28, height: 28),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _formatCardName(cardName),
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF047CBC)),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                           Icon(Icons.chevron_right, color: Colors.grey.shade400),
@@ -390,25 +390,25 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
             width: 90,
             height: 48,
             decoration: BoxDecoration(
-              color: _primaryBlue.withOpacity(0.08),
-              border: Border.all(color: _primaryBlue, width: 1.5),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
                 cardFileName,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _primaryBlue, letterSpacing: 0.5),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5),
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
                 color: isChanged ? Colors.green.shade50 : null,
                 border: Border.all(
-                  color: isChanged ? Colors.green.shade300 : _primaryBlue.withOpacity(0.3),
+                  color: isChanged ? Colors.green.shade300 : Theme.of(context).colorScheme.primary.withOpacity(0.3),
                   width: isChanged ? 1.5 : 1,
                 ),
                 borderRadius: BorderRadius.circular(6),
@@ -435,10 +435,10 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
                 onChanged: widget.isNight ? null : (value) {
                   setState(() { _selectedMembers[normalizedCardName] = value; });
                 },
-                underline: const SizedBox(),
+                underline: SizedBox(),
                 icon: Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: Icon(Icons.expand_more, color: _primaryBlue.withOpacity(0.7)),
+                  child: Icon(Icons.expand_more, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
                 ),
               ),
             ),

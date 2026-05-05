@@ -24,7 +24,7 @@ class AdminGroupTerritoryAssignmentScreen extends StatefulWidget {
 
 class _AdminGroupTerritoryAssignmentScreenState
     extends State<AdminGroupTerritoryAssignmentScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   bool _saving = false;
@@ -215,10 +215,10 @@ class _AdminGroupTerritoryAssignmentScreenState
                           children: [
                             Text(
                               g,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: _primaryBlue,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -240,7 +240,7 @@ class _AdminGroupTerritoryAssignmentScreenState
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryBlue,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -303,14 +303,14 @@ class _AdminGroupTerritoryAssignmentScreenState
                           height: 40,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _primaryBlue.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             territory,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _primaryBlue,
+                              color: Theme.of(context).colorScheme.primary,
                               fontSize: 16,
                             ),
                           ),
@@ -363,10 +363,10 @@ class _AdminGroupTerritoryAssignmentScreenState
                         height: 20,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
-                    : const Icon(Icons.save),
+                    : Icon(Icons.save),
                 label: Text(_saving ? '保存中...' : '一括保存する'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryBlue,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -402,7 +402,7 @@ class _AdminGroupTerritoryAssignmentScreenState
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today, size: 16, color: _primaryBlue),
+            Icon(Icons.calendar_today, size: 16, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             Expanded(
               child: Column(

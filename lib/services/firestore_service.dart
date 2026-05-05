@@ -2059,4 +2059,43 @@ class FirestoreService {
       return [];
     }
   }
+
+  // ──────────────────────────────────────────────
+  // USER_SETTINGS コレクション（ユーザー個別設定）
+  // ──────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>?> getUserSettings(String email) async {
+    try {
+      final doc = await _db
+          .collection('USER_SETTINGS')
+          .doc(email.toLowerCase())
+          .get(const GetOptions(source: Source.server));
+      if (doc.exists) return doc.data();
+      return null;
+    } catch (_) {
+      try {
+        final doc = await _db
+            .collection('USER_SETTINGS')
+            .doc(email.toLowerCase())
+            .get(const GetOptions(source: Source.cache));
+        if (doc.exists) return doc.data();
+      } catch (_) {}
+      return null;
+    }
+  }
+
+  static Future<void> saveUserSettings({
+    required String email,
+    required String primaryColor,
+    required String accentColor,
+    required String textColor,
+  }) async {
+    await _db.collection('USER_SETTINGS').doc(email.toLowerCase()).set({
+      'mail': email.toLowerCase(),
+      'primaryColor': primaryColor,
+      'accentColor': accentColor,
+      'textColor': textColor,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
 }

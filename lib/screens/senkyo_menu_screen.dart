@@ -10,7 +10,7 @@ import 'public_witnessing_table_screen.dart';
 class SenkyoMenuScreen extends StatelessWidget {
   const SenkyoMenuScreen({super.key});
 
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class SenkyoMenuScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildSectionTag('区域情報'),
+            _buildSectionTag(context, '区域情報'),
             const SizedBox(height: 8),
             _buildMenuButton(
               context,
@@ -94,7 +94,7 @@ class SenkyoMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionTag('取決表'),
+            _buildSectionTag(context, '取決表'),
             const SizedBox(height: 8),
             _buildMenuButton(
               context,
@@ -111,13 +111,13 @@ class SenkyoMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTag(String label) {
+  Widget _buildSectionTag(BuildContext context, String label) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -139,7 +139,7 @@ class SenkyoMenuScreen extends StatelessWidget {
     required VoidCallback onTap,
     Color? accentColor,
   }) {
-    final color = accentColor ?? _primaryBlue;
+    final color = accentColor ?? Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTap: onTap,
       child: Container(

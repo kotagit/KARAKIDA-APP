@@ -25,7 +25,7 @@ class NightTerritoryCardsScreen extends StatefulWidget {
 }
 
 class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -186,10 +186,10 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                 height: 40,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isSelected ? _primaryBlue : Colors.white,
-                    foregroundColor: isSelected ? Colors.white : _primaryBlue,
+                    backgroundColor: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                    foregroundColor: isSelected ? Colors.white : Theme.of(context).colorScheme.primary,
                     padding: EdgeInsets.zero,
-                    side: const BorderSide(color: _primaryBlue, width: 2),
+                    side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -226,15 +226,15 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
-                    color: _primaryBlue.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '区域No.$territory (${cards.length}カード)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: _primaryBlue,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -275,15 +275,15 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                             horizontal: 12, vertical: 14),
                         child: Row(
                           children: [
-                            Icon(widget.cardIcon, color: _primaryBlue),
+                            Icon(widget.cardIcon, color: Theme.of(context).colorScheme.primary),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 '区域No.$cardName',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: _primaryBlue,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ),

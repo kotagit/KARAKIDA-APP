@@ -15,7 +15,7 @@ class ServiceReportResultScreen extends StatefulWidget {
 
 class _ServiceReportResultScreenState
     extends State<ServiceReportResultScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -164,10 +164,10 @@ class _ServiceReportResultScreenState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _primaryBlue, width: 2.0),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2.0),
         boxShadow: [
           BoxShadow(
-            color: _primaryBlue.withOpacity(0.10),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -179,7 +179,7 @@ class _ServiceReportResultScreenState
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle, color: _primaryBlue, size: 20),
+              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 '${item.month}月',

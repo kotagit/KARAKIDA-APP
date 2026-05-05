@@ -19,7 +19,7 @@ class TerritoryCardsListScreen extends StatefulWidget {
 }
 
 class _TerritoryCardsListScreenState extends State<TerritoryCardsListScreen> {
-  static const Color _primaryBlue = Color(0xFF047CBC);
+  
 
   bool _loading = true;
   String? _error;
@@ -185,15 +185,15 @@ class _TerritoryCardsListScreenState extends State<TerritoryCardsListScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   child: Row(
                     children: [
-                      const Icon(Icons.map_outlined, color: _primaryBlue),
+                      Icon(Icons.map_outlined, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           '区域No.$cardName',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: _primaryBlue,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -216,7 +216,7 @@ class _TerritoryCardsListScreenState extends State<TerritoryCardsListScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
