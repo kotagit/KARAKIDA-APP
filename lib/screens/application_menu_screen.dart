@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'application_screen.dart';
 import 'application_result_screen.dart';
-import 'service_report_menu_screen.dart';
+import 'service_report_screen.dart';
 import 'service_report_result_screen.dart';
 import 'area_info_registration_screen.dart';
 
@@ -47,7 +47,7 @@ class ApplicationMenuScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const ServiceReportMenuScreen()),
+                    builder: (_) => const ServiceReportScreen()),
               ),
             ),
             const SizedBox(height: 28),

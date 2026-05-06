@@ -199,7 +199,9 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                     )
                   : _buildDropdown<String>(
                       value: _selectedRole,
-                      items: _roles,
+                      items: (!widget.isOther && sheets.currentUserRole != 'RP')
+                          ? _roles.where((r) => r != '正規開拓者').toList()
+                          : _roles,
                       labelBuilder: (r) => r,
                       onChanged: (v) => setState(() {
                         _selectedRole = v!;

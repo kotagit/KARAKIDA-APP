@@ -95,7 +95,7 @@ class _AuthGateState extends State<AuthGate> {
 
     if (auth.isSignedIn) {
       // サインイン済みだが、まだ SheetsProvider が初期化されていない場合
-      if (sheets.currentUserEmail == null && auth.currentUser?.email != null) {
+      if (sheets.currentUserEmail != auth.currentUser?.email && auth.currentUser?.email != null) {
         final email = auth.currentUser!.email!;
         debugPrint('AuthGate: Signed in, but user data missing. Fetching Firestore for $email...');
         sheets.loadAccessControl(email);

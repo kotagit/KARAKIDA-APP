@@ -139,7 +139,7 @@ class AuthService extends ChangeNotifier {
     debugPrint('Auth: signOut started');
     try {
       await _firebaseAuth.signOut();
-      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
     } catch (e) {
       debugPrint('Auth: Error during signOut: $e');
     }

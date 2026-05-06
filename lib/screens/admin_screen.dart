@@ -67,7 +67,7 @@ class AdminScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
-            if (sheets.isAdmin) ...[
+            if (sheets.isPW) ...[
               _buildSectionTag(context, '取決め策定者'),
               const SizedBox(height: 8),
               _buildMenuButton(

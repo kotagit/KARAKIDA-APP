@@ -84,6 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
               isAdmin: userData['isAdmin'] == true,
               isCho: userData['isCho'] == true,
               isTerritoryServant: userData['isTerritoryServant'] == true,
+              isPW: userData['isPW'] == true,
               email: user.email,
             );
         sheets.loadFiles(userEmail: user.email);

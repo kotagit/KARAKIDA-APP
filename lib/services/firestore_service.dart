@@ -116,14 +116,16 @@ class FirestoreService {
   static void _setAdminFlag(Map<String, dynamic> data) {
     final s1 = (data['status1'] as String? ?? '').toUpperCase();
     final s2 = (data['status2'] as String? ?? '').toUpperCase();
-    final statuses = {s1, s2};
-    // 司会者: EL or MS
-    data['isCho'] = statuses.contains('EL') || statuses.contains('MS');
-    // 区域係: AM
-    data['isTerritoryServant'] = statuses.contains('AM');
-    // 管理画面アクセス可: 司会者 or 区域係
+    final s3 = (data['status3'] as String? ?? '').toUpperCase();
+    // 司会者: status1 が EL/MS/BR
+    data['isCho'] = s1 == 'EL' || s1 == 'MS' || s1 == 'BR';
+    // 区域係: status2 が AM
+    data['isTerritoryServant'] = s2 == 'AM';
+    // 取決め策定者: status3 が PW
+    data['isPW'] = s3 == 'PW';
+    // 管理画面アクセス可: いずれか該当
     data['isAdmin'] =
-        (data['isCho'] as bool) || (data['isTerritoryServant'] as bool);
+        (data['isCho'] as bool) || (data['isTerritoryServant'] as bool) || (data['isPW'] as bool);
   }
 
   /// グループに所属するメンバー名一覧を取得

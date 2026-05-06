@@ -26,6 +26,7 @@ class SheetsProvider extends ChangeNotifier {
   bool _isAdmin = false;
   bool _isCho = false;
   bool _isTerritoryServant = false;
+  bool _isPW = false;
   String? _currentUserRole;
   String? _currentUserGender;
   String? _currentUserEmail;
@@ -38,6 +39,7 @@ class SheetsProvider extends ChangeNotifier {
   bool get isAdmin => _isAdmin;
   bool get isCho => _isCho;
   bool get isTerritoryServant => _isTerritoryServant;
+  bool get isPW => _isPW;
 
   // Visit period from Firestore config
   String? _visitStartDate;
@@ -80,7 +82,7 @@ class SheetsProvider extends ChangeNotifier {
   }
 
   /// GASから取得したユーザー情報で認証状態を更新する
-  void updateAuth(Map<String, String>? headers, {String? name, String? group, String? furigana, bool isAdmin = false, bool isCho = false, bool isTerritoryServant = false, String? email}) {
+  void updateAuth(Map<String, String>? headers, {String? name, String? group, String? furigana, bool isAdmin = false, bool isCho = false, bool isTerritoryServant = false, bool isPW = false, String? email}) {
     if (headers == null) {
       _sheetsService = null;
       stopListening();
@@ -97,8 +99,9 @@ class SheetsProvider extends ChangeNotifier {
     _isAdmin = isAdmin;
     _isCho = isCho;
     _isTerritoryServant = isTerritoryServant;
+    _isPW = isPW;
     _currentUserEmail = email;
-    debugPrint('Auth Updated: Name="$_currentUserName", Group="$_currentUserGroupName", Admin=$_isAdmin, Cho=$_isCho, TS=$_isTerritoryServant');
+    debugPrint('Auth Updated: Name="$_currentUserName", Group="$_currentUserGroupName", Admin=$_isAdmin, Cho=$_isCho, TS=$_isTerritoryServant, PW=$_isPW');
     _startWatchingParams();
     notifyListeners();
   }
@@ -211,6 +214,7 @@ class SheetsProvider extends ChangeNotifier {
     _isAdmin = false;
     _isCho = false;
     _isTerritoryServant = false;
+    _isPW = false;
     _visitStartDate = null;
     _visitEndDate = null;
     _nightStartDate = null;
@@ -251,6 +255,19 @@ class SheetsProvider extends ChangeNotifier {
 
   Future<void> loadAccessControl(String email) async {
     try {
+      // 異なるアカウントの場合はユーザー情報をリセット
+      if (_currentUserEmail != null && _currentUserEmail != email) {
+        _currentUserName = null;
+        _currentUserGroupName = null;
+        _currentUserFurigana = null;
+        _currentUserEmail = null;
+        _isAdmin = false;
+        _isCho = false;
+        _isTerritoryServant = false;
+        _isPW = false;
+        _currentUserRole = null;
+        _currentUserGender = null;
+      }
       // Firestoreからユーザー情報を取得
       if (_currentUserName == null || _currentUserName!.isEmpty) {
         final userData = await FirestoreService.getUserByEmail(email);
@@ -259,11 +276,10 @@ class SheetsProvider extends ChangeNotifier {
           _currentUserName = userData['name'] as String?;
           _currentUserGroupName = userData['group'] as String?;
           _currentUserFurigana = userData['furigana'] as String?;
-          if (_isAdmin || userData['isAdmin'] == true) {
-            _isAdmin = true;
-          }
-          if (userData['isCho'] == true) _isCho = true;
-          if (userData['isTerritoryServant'] == true) _isTerritoryServant = true;
+          _isAdmin = userData['isAdmin'] == true;
+          _isCho = userData['isCho'] == true;
+          _isTerritoryServant = userData['isTerritoryServant'] == true;
+          _isPW = userData['isPW'] == true;
           _currentUserRole = userData['role'] as String?;
           _currentUserGender = userData['gender'] as String?;
           notifyListeners(); // 取得成功時にUIへ通知

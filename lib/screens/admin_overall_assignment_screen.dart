@@ -160,9 +160,17 @@ class _AdminOverallAssignmentScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNight
-            ? '夜間 (${widget.groupName}) 一括割当て'
-            : '${widget.groupName} 一括割当て'),
+        leading: _selectedTerritory != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => setState(() => _selectedTerritory = null),
+              )
+            : null,
+        title: Text(_selectedTerritory != null
+            ? '区域No.$_selectedTerritory'
+            : widget.isNight
+                ? '夜間 (${widget.groupName}) 一括割当て'
+                : '${widget.groupName} 一括割当て'),
         titleTextStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
@@ -171,9 +179,9 @@ class _AdminOverallAssignmentScreenState
         actions: [
           if (hasChanges && !_isLoading)
             IconButton(
-              icon: _isSaving 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Icon(Icons.save),
+              icon: _isSaving
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.save),
               onPressed: _isSaving ? null : _saveAll,
               tooltip: '一括保存',
             ),
@@ -226,68 +234,67 @@ class _AdminOverallAssignmentScreenState
         return a.compareTo(b);
       });
 
+    // 区域未選択: ボタン一覧のみ表示
+    if (_selectedTerritory == null) {
+      if (_isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_allTerritories.isEmpty) {
+        return const Center(child: Text('割当て情報がありません'));
+      }
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const double itemSize = 68.0;
+            const double spacing = 8.0;
+            final itemsPerRow = ((constraints.maxWidth + spacing) / (itemSize + spacing)).floor();
+            final remainder = _allTerritories.length % itemsPerRow;
+            final dummies = remainder == 0 ? 0 : itemsPerRow - remainder;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              alignment: WrapAlignment.center,
+              children: [
+                ..._allTerritories.map((t) {
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedTerritory = t),
+                    child: Container(
+                      width: itemSize,
+                      height: itemSize,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                ...List.generate(dummies, (_) => const SizedBox(width: itemSize, height: itemSize)),
+              ],
+            );
+          },
+        ),
+      );
+    }
+
+    // 区域選択済み: 該当区域のカード情報のみ表示
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_allTerritories.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _allTerritories.map((t) {
-                final isSelected = _selectedTerritory == t;
-                return SizedBox(
-                  width: 64,
-                  height: 40,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
-                      foregroundColor: isSelected ? Colors.white : Theme.of(context).colorScheme.primary,
-                      padding: EdgeInsets.zero,
-                      side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 1,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _selectedTerritory = t;
-                      });
-                    },
-                    child: Text(
-                      t,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-          ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '合計: ${_assignments.length}カード',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
-              if (_isLoading || _isSaving)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          if (_isLoading || _isSaving)
+            const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
           if (_assignments.isEmpty && _isLoading)
             const Padding(
               padding: EdgeInsets.all(32),
@@ -296,7 +303,7 @@ class _AdminOverallAssignmentScreenState
           else if (_assignments.isEmpty)
             const Center(child: Text('割当て情報がありません'))
           else
-            ...sortedTerritories.where((t) => _selectedTerritory == null || t == _selectedTerritory).map((territory) {
+            ...sortedTerritories.where((t) => t == _selectedTerritory).map((territory) {
               final cards = grouped[territory]!;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

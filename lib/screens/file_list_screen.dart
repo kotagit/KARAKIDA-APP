@@ -176,7 +176,9 @@ class _FileListScreenState extends State<FileListScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const SheetViewScreen(),
+                          builder: (_) => SheetViewScreen(
+                            assignedMemberName: userName.isEmpty ? null : userName,
+                          ),
                         ),
                       );
                     },
@@ -241,7 +243,9 @@ class _FileListScreenState extends State<FileListScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const SheetViewScreen(),
+                          builder: (_) => SheetViewScreen(
+                            assignedMemberName: userName.isEmpty ? null : userName,
+                          ),
                         ),
                       );
                     },
