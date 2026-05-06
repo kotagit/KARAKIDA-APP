@@ -27,12 +27,14 @@ class SheetsProvider extends ChangeNotifier {
   bool _isCho = false;
   bool _isTerritoryServant = false;
   String? _currentUserRole;
+  String? _currentUserGender;
   String? _currentUserEmail;
   String? get currentUserName => _currentUserName;
   String? get currentUserGroupName => _currentUserGroupName;
   String? get currentUserFurigana => _currentUserFurigana;
   String? get currentUserEmail => _currentUserEmail;
   String? get currentUserRole => _currentUserRole;
+  String? get currentUserGender => _currentUserGender;
   bool get isAdmin => _isAdmin;
   bool get isCho => _isCho;
   bool get isTerritoryServant => _isTerritoryServant;
@@ -263,6 +265,7 @@ class SheetsProvider extends ChangeNotifier {
           if (userData['isCho'] == true) _isCho = true;
           if (userData['isTerritoryServant'] == true) _isTerritoryServant = true;
           _currentUserRole = userData['role'] as String?;
+          _currentUserGender = userData['gender'] as String?;
           notifyListeners(); // 取得成功時にUIへ通知
         }
       }

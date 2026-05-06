@@ -43,6 +43,16 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
     final now = DateTime.now();
     _selectedMonth = now.month == 1 ? 12 : now.month - 1;
 
+    if (!widget.isOther) {
+      final sheets = context.read<SheetsProvider>();
+      if (sheets.currentUserRole == 'RP') {
+        _selectedRole = '正規開拓者';
+      }
+      final g = sheets.currentUserGender;
+      if (g == 'M') _selectedGender = '男性';
+      if (g == 'F') _selectedGender = '女性';
+    }
+
     if (widget.isOther) {
       _loadGroups();
     }
@@ -117,29 +127,16 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                     ),
             ),
 
-            // ふりがな（自分の報告は USER_LIST から自動取得）
-            _buildField(
-              label: 'ふりがな',
-              required: true,
-              child: widget.isOther
-                  ? TextFormField(
-                      controller: _furiganaController,
-                      decoration: _inputDecoration('ふりがなを入力'),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        sheets.currentUserFurigana ?? '',
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                    ),
-            ),
+            // ふりがな（他の人の報告のみ表示）
+            if (widget.isOther)
+              _buildField(
+                label: 'ふりがな',
+                required: true,
+                child: TextFormField(
+                  controller: _furiganaController,
+                  decoration: _inputDecoration('ふりがなを入力'),
+                ),
+              ),
 
             // グループ名
             _buildField(
@@ -168,17 +165,48 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                     ),
             ),
 
-            // 性別
-            _buildField(
-              label: '性別',
-              required: true,
-              child: _buildDropdown<String>(
-                value: _selectedGender,
-                items: const ['男性', '女性'],
-                labelBuilder: (v) => v,
-                hint: '選択してください',
-                onChanged: (v) => setState(() => _selectedGender = v),
+            // 性別（他の人の報告のみ表示）
+            if (widget.isOther)
+              _buildField(
+                label: '性別',
+                required: true,
+                child: _buildDropdown<String>(
+                  value: _selectedGender,
+                  items: const ['男性', '女性'],
+                  labelBuilder: (v) => v,
+                  hint: '選択してください',
+                  onChanged: (v) => setState(() => _selectedGender = v),
+                ),
               ),
+
+            // 立場
+            _buildField(
+              label: '立場',
+              required: true,
+              child: (!widget.isOther && sheets.currentUserRole == 'RP')
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: const Text(
+                        '正規開拓者',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                    )
+                  : _buildDropdown<String>(
+                      value: _selectedRole,
+                      items: _roles,
+                      labelBuilder: (r) => r,
+                      onChanged: (v) => setState(() {
+                        _selectedRole = v!;
+                        _hoursController.clear();
+                        _selectedParticipation = null;
+                      }),
+                    ),
             ),
 
             // 月
@@ -190,22 +218,6 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
                 items: List.generate(12, (i) => i + 1),
                 labelBuilder: (m) => '$m月',
                 onChanged: (v) => setState(() => _selectedMonth = v!),
-              ),
-            ),
-
-            // 立場
-            _buildField(
-              label: '立場',
-              required: true,
-              child: _buildDropdown<String>(
-                value: _selectedRole,
-                items: _roles,
-                labelBuilder: (r) => r,
-                onChanged: (v) => setState(() {
-                  _selectedRole = v!;
-                  _hoursController.clear();
-                  _selectedParticipation = null;
-                }),
               ),
             ),
 
@@ -491,7 +503,7 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
       groupName = sheets.currentUserGroupName ?? '';
     }
 
-    if (_selectedGender == null) {
+    if (widget.isOther && _selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('性別を選択してください')),
       );

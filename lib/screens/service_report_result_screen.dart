@@ -214,6 +214,20 @@ class _ServiceReportResultScreenState
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Builder(builder: (context) {
+                  final now = DateTime.now();
+                  final currentMonth = now.month;
+                  // 9月始まりの期間における残り月数（今月含む）
+                  final monthInYear = currentMonth >= 9 ? currentMonth - 8 : currentMonth + 4;
+                  final remainingMonths = 12 - monthInYear + 1;
+                  final remainingHours = (goalHours - totalHours).clamp(0.0, goalHours);
+                  final monthlyAvg = remainingMonths > 0 ? remainingHours / remainingMonths : 0.0;
+                  return Text(
+                    '残り$remainingMonths ヶ月 / 月平均 ${monthlyAvg.toStringAsFixed(1)} 時間必要',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  );
+                }),
               ],
             ),
           ),
