@@ -124,12 +124,25 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
         children: _groupOrder.expand((group) {
           final territories = _groupTerritories[group] ?? [];
           return <Widget>[
-            _buildGroupTag(group),
+            _buildGroupTag('${group}グループ'),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: territories.map((t) => _buildTerritoryChip(context, t)).toList(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const double itemSize = 56.0;
+                const double spacing = 8.0;
+                final itemsPerRow = ((constraints.maxWidth + spacing) / (itemSize + spacing)).floor();
+                final remainder = territories.length % itemsPerRow;
+                final dummies = remainder == 0 ? 0 : itemsPerRow - remainder;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ...territories.map((t) => _buildTerritoryChip(context, t)),
+                    ...List.generate(dummies, (_) => const SizedBox(width: itemSize, height: itemSize)),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
           ];
@@ -174,12 +187,14 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
         ),
+        alignment: Alignment.center,
         child: Text(
           territory,
           style: TextStyle(

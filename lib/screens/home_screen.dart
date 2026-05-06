@@ -29,7 +29,7 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
 
-  List<MenuItem> _getMenuItems(bool isAdmin) => [
+  List<MenuItem> _getMenuItems(bool isAdmin, ColorScheme cs) => [
         const MenuItem(
           label: '発表',
           iconAsset: 'assets/最新情報.png',
@@ -46,17 +46,17 @@ class HomeScreen extends StatelessWidget {
           destination: ApplicationMenuScreen(),
         ),
         if (isAdmin)
-          const MenuItem(
+          MenuItem(
             label: '管理画面',
             iconAsset: 'assets/奉仕監督.png',
-            destination: AdminScreen(),
-            color: Color(0xFFE0A800),
+            destination: const AdminScreen(),
+            color: cs.secondary,
           ),
         const MenuItem(
-          label: '開発用',
+          label: '設定',
           iconAsset: '',
-          iconData: Icons.computer,
-          color: Color(0xFF888888),
+          iconData: Icons.palette_outlined,
+          destination: ColorSettingsScreen(),
         ),
       ];
 
@@ -65,7 +65,7 @@ class HomeScreen extends StatelessWidget {
     final auth = context.watch<AuthService>();
     final sheets = context.watch<SheetsProvider>();
     final cs = Theme.of(context).colorScheme;
-    final menuItems = _getMenuItems(sheets.isAdmin);
+    final menuItems = _getMenuItems(sheets.isAdmin, cs);
 
     return Scaffold(
       appBar: AppBar(
@@ -88,14 +88,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.palette_outlined),
-            tooltip: 'カラー設定',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ColorSettingsScreen()),
-            ),
-          ),
         ],
       ),
       body: Padding(
@@ -214,19 +206,39 @@ class HomeScreen extends StatelessWidget {
           : null,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: isEnabled
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, Colors.grey.shade50],
+                )
+              : null,
+          color: isEnabled ? null : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade300,
-            width: 2,
+            width: 3,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: (item.color ?? cs.primary).withOpacity(0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.8),
+                    blurRadius: 4,
+                    offset: const Offset(0, -1),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -30,16 +30,16 @@ class ThemeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> saveSettings({
-    required String email,
-    Color? primaryColor,
-    Color? accentColor,
-    Color? textColor,
-  }) async {
+  // メモリのみ更新（Firestore書き込みなし）
+  void updateColors({Color? primaryColor, Color? accentColor, Color? textColor}) {
     if (primaryColor != null) _primaryColor = primaryColor;
     if (accentColor != null) _accentColor = accentColor;
     if (textColor != null) _textColor = textColor;
     notifyListeners();
+  }
+
+  // Firestoreに保存
+  Future<void> saveSettings({required String email}) async {
     try {
       await FirestoreService.saveUserSettings(
         email: email,

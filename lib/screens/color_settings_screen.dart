@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../providers/theme_provider.dart';
 import '../providers/sheets_provider.dart';
 
@@ -14,7 +15,6 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   late Color _primary;
   late Color _accent;
   late Color _text;
-  bool _saving = false;
 
   static const _primaryPresets = [
     Color(0xFF047CBC),
@@ -58,18 +58,22 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
     _text = tp.textColor;
   }
 
+  void _updateColor({Color? primary, Color? accent, Color? text}) {
+    if (primary != null) setState(() => _primary = primary);
+    if (accent != null) setState(() => _accent = accent);
+    if (text != null) setState(() => _text = text);
+    context.read<ThemeProvider>().updateColors(
+      primaryColor: primary,
+      accentColor: accent,
+      textColor: text,
+    );
+  }
+
   Future<void> _save() async {
     final email = context.read<SheetsProvider>().currentUserEmail;
     if (email == null) return;
-    setState(() => _saving = true);
-    await context.read<ThemeProvider>().saveSettings(
-      email: email,
-      primaryColor: _primary,
-      accentColor: _accent,
-      textColor: _text,
-    );
+    await context.read<ThemeProvider>().saveSettings(email: email);
     if (mounted) {
-      setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('保存しました')),
       );
@@ -77,30 +81,57 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   }
 
   void _reset() {
-    setState(() {
-      _primary = const Color(0xFF047CBC);
-      _accent = const Color(0xFFF1C232);
-      _text = const Color(0xFF047CBC);
-    });
-    context.read<ThemeProvider>().saveSettings(
-      email: context.read<SheetsProvider>().currentUserEmail ?? '',
-      primaryColor: _primary,
-      accentColor: _accent,
-      textColor: _text,
+    _updateColor(
+      primary: const Color(0xFF047CBC),
+      accent: const Color(0xFFF1C232),
+      text: const Color(0xFF047CBC),
+    );
+  }
+
+  Future<void> _showColorPicker({
+    required String title,
+    required Color current,
+    required ValueChanged<Color> onChanged,
+  }) async {
+    Color temp = current;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: temp,
+            onColorChanged: (c) => temp = c,
+            enableAlpha: false,
+            labelTypes: const [ColorLabelType.hex, ColorLabelType.rgb],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              onChanged(temp);
+              Navigator.pop(ctx);
+            },
+            child: const Text('決定'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('カラー設定', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: _reset,
-            child: const Text('リセット', style: TextStyle(color: Colors.white)),
+            child: const Text('初期設定に戻す', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -110,71 +141,71 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSection(
-              context,
               label: 'メインカラー',
               description: 'AppBar・ボタン・ボーダーの色',
               selected: _primary,
               presets: _primaryPresets,
-              onSelected: (c) {
-                setState(() => _primary = c);
-                context.read<ThemeProvider>().saveSettings(
-                  email: context.read<SheetsProvider>().currentUserEmail ?? '',
-                  primaryColor: c,
-                  accentColor: _accent,
-                  textColor: _text,
-                );
-              },
+              onSelected: (c) => _updateColor(primary: c),
+              onCustom: () => _showColorPicker(
+                title: 'メインカラー',
+                current: _primary,
+                onChanged: (c) => _updateColor(primary: c),
+              ),
             ),
             const SizedBox(height: 24),
             _buildSection(
-              context,
               label: 'アクセントカラー',
               description: '地図アイコン・ハイライトの色',
               selected: _accent,
               presets: _accentPresets,
-              onSelected: (c) {
-                setState(() => _accent = c);
-                context.read<ThemeProvider>().saveSettings(
-                  email: context.read<SheetsProvider>().currentUserEmail ?? '',
-                  primaryColor: _primary,
-                  accentColor: c,
-                  textColor: _text,
-                );
-              },
+              onSelected: (c) => _updateColor(accent: c),
+              onCustom: () => _showColorPicker(
+                title: 'アクセントカラー',
+                current: _accent,
+                onChanged: (c) => _updateColor(accent: c),
+              ),
             ),
             const SizedBox(height: 24),
             _buildSection(
-              context,
               label: 'テキストカラー',
               description: 'セクション見出し・ラベルテキストの色',
               selected: _text,
               presets: _textPresets,
-              onSelected: (c) {
-                setState(() => _text = c);
-                context.read<ThemeProvider>().saveSettings(
-                  email: context.read<SheetsProvider>().currentUserEmail ?? '',
-                  primaryColor: _primary,
-                  accentColor: _accent,
-                  textColor: c,
-                );
-              },
+              onSelected: (c) => _updateColor(text: c),
+              onCustom: () => _showColorPicker(
+                title: 'テキストカラー',
+                current: _text,
+                onChanged: (c) => _updateColor(text: c),
+              ),
             ),
             const SizedBox(height: 32),
-            _buildPreview(cs),
+            _buildPreview(),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _save,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('変更を保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSection(
-    BuildContext context, {
+  Widget _buildSection({
     required String label,
     required String description,
     required Color selected,
     required List<Color> presets,
     required ValueChanged<Color> onSelected,
+    required VoidCallback onCustom,
   }) {
+    final isCustom = !presets.any((c) => c.value == selected.value);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -185,36 +216,59 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: presets.map((color) {
-            final isSelected = color.value == selected.value;
-            return GestureDetector(
-              onTap: () => onSelected(color),
+          children: [
+            ...presets.map((color) {
+              final isSelected = color.value == selected.value;
+              return GestureDetector(
+                onTap: () => onSelected(color),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.black : Colors.grey.shade300,
+                      width: isSelected ? 3 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 8)]
+                        : null,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, color: Colors.white, size: 20)
+                      : null,
+                ),
+              );
+            }),
+            GestureDetector(
+              onTap: onCustom,
               child: Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: color,
+                  color: isCustom ? selected : Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? Colors.black : Colors.grey.shade300,
-                    width: isSelected ? 3 : 1,
+                    color: isCustom ? Colors.black : Colors.grey.shade400,
+                    width: isCustom ? 3 : 1,
                   ),
-                  boxShadow: isSelected
-                      ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 8)]
+                  boxShadow: isCustom
+                      ? [BoxShadow(color: selected.withOpacity(0.4), blurRadius: 8)]
                       : null,
                 ),
-                child: isSelected
+                child: isCustom
                     ? const Icon(Icons.check, color: Colors.white, size: 20)
-                    : null,
+                    : Icon(Icons.palette_outlined, color: Colors.grey.shade500, size: 20),
               ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildPreview(ColorScheme cs) {
+  Widget _buildPreview() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

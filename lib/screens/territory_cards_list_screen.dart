@@ -165,7 +165,10 @@ class _TerritoryCardsListScreenState extends State<TerritoryCardsListScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const SheetViewScreen(isNight: false),
+                      builder: (_) => SheetViewScreen(
+                        isNight: false,
+                        assignedMemberName: member.isEmpty ? null : member,
+                      ),
                     ),
                   );
                 },

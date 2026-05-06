@@ -8,7 +8,8 @@ import '../services/firestore_service.dart';
 
 class SheetViewScreen extends StatefulWidget {
   final bool isNight;
-  const SheetViewScreen({super.key, this.isNight = false});
+  final String? assignedMemberName;
+  const SheetViewScreen({super.key, this.isNight = false, this.assignedMemberName});
 
   @override
   State<SheetViewScreen> createState() => _SheetViewScreenState();
@@ -360,7 +361,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
   Widget _buildHeaderInfo(SheetsProvider sheets) {
     final startStr = _formatDate(widget.isNight ? sheets.nightStartDate : sheets.visitStartDate);
     final endStr = _formatDate(widget.isNight ? sheets.nightEndDate : sheets.visitEndDate);
-    final userName = sheets.currentUserName ?? '';
+    final userName = widget.assignedMemberName ?? sheets.currentUserName ?? '';
 
     return Container(
       padding: const EdgeInsets.all(12),

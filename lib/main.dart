@@ -214,7 +214,7 @@ class _ServiceReportBannerWrapperState
           right: 0,
           height: bannerHeight,
           child: Material(
-            color: const Color(0xFFF1C232),
+            color: Theme.of(context).colorScheme.secondary,
             child: Row(
               children: [
                 Expanded(
