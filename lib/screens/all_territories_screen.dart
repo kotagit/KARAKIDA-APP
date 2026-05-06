@@ -128,7 +128,7 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
             const SizedBox(height: 8),
             LayoutBuilder(
               builder: (context, constraints) {
-                const double itemSize = 56.0;
+                const double itemSize = 68.0;
                 const double spacing = 8.0;
                 final itemsPerRow = ((constraints.maxWidth + spacing) / (itemSize + spacing)).floor();
                 final remainder = territories.length % itemsPerRow;
@@ -139,7 +139,7 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
                   alignment: WrapAlignment.center,
                   children: [
                     ...territories.map((t) => _buildTerritoryChip(context, t)),
-                    ...List.generate(dummies, (_) => const SizedBox(width: itemSize, height: itemSize)),
+                    ...List.generate(dummies, (_) => const SizedBox(width: 68, height: 68)),
                   ],
                 );
               },
@@ -187,8 +187,8 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
         );
       },
       child: Container(
-        width: 56,
-        height: 56,
+        width: 68,
+        height: 68,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -198,7 +198,7 @@ class _AllTerritoriesScreenState extends State<AllTerritoriesScreen> {
         child: Text(
           territory,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.primary,
           ),

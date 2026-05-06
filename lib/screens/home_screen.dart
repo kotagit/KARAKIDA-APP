@@ -8,6 +8,7 @@ import 'application_menu_screen.dart';
 import 'announcement_screen.dart';
 import 'admin_screen.dart';
 import 'color_settings_screen.dart';
+import 'support_screen.dart';
 
 class MenuItem {
   final String label;
@@ -45,13 +46,12 @@ class HomeScreen extends StatelessWidget {
           iconAsset: 'assets/申込み.png',
           destination: ApplicationMenuScreen(),
         ),
-        if (isAdmin)
-          MenuItem(
-            label: '管理画面',
-            iconAsset: 'assets/奉仕監督.png',
-            destination: const AdminScreen(),
-            color: cs.secondary,
-          ),
+        const MenuItem(
+          label: '支援',
+          iconAsset: '',
+          iconData: Icons.handshake_outlined,
+          destination: SupportScreen(),
+        ),
         const MenuItem(
           label: '設定',
           iconAsset: '',
@@ -90,21 +90,51 @@ class HomeScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.0,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          const double padding = 16;
+          const double spacing = 12;
+          const int columns = 3;
+          final tileSize = (constraints.maxWidth - padding * 2 - spacing * (columns - 1)) / columns;
+          return Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.0,
+              ),
+              itemCount: menuItems.length,
+              itemBuilder: (context, index) {
+                final item = menuItems[index];
+                return _buildMenuCard(context, item);
+              },
+            ),
           ),
-          itemCount: menuItems.length,
-          itemBuilder: (context, index) {
-            final item = menuItems[index];
-            return _buildMenuCard(context, item);
-          },
-        ),
+          if (sheets.isAdmin)
+            Positioned(
+              left: 16,
+              bottom: 16,
+              child: SizedBox(
+                width: tileSize,
+                height: tileSize,
+                child: _buildMenuCard(
+                  context,
+                  MenuItem(
+                    label: '管理画面',
+                    iconAsset: 'assets/奉仕監督.png',
+                    destination: const AdminScreen(),
+                    color: cs.secondary,
+                  ),
+                ),
+              ),
+            ),
+        ],
+          );
+        },
       ),
       bottomNavigationBar: Container(
         color: cs.primary,

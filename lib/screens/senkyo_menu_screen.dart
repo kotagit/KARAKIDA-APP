@@ -46,7 +46,7 @@ class SenkyoMenuScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _buildMenuButton(
               context,
-              label: '個人の区域カード',
+              label: 'マイ区域カード',
               icon: Icons.map_outlined,
               onTap: () => Navigator.push(
                 context,
@@ -78,18 +78,6 @@ class SenkyoMenuScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const NightTerritoryCardsScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildMenuButton(
-              context,
-              label: '全ての区域カード',
-              icon: Icons.map_outlined,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AllTerritoriesScreen(),
                 ),
               ),
             ),

@@ -1,36 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/sheets_provider.dart';
+import 'all_territories_screen.dart';
 import 'service_report_screen.dart';
 
-class ServiceReportMenuScreen extends StatelessWidget {
-  const ServiceReportMenuScreen({super.key});
-
-  
+class SupportScreen extends StatelessWidget {
+  const SupportScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final sheets = context.watch<SheetsProvider>();
+    final color = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('奉仕報告'),
+        title: const Text('支援'),
         titleTextStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
+        actions: [
+          if (sheets.currentUserName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
+                child: Text(
+                  sheets.currentUserName!,
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 16),
             _buildMenuButton(
               context,
-              label: '自分の報告',
-              icon: Icons.person_outline,
+              label: '全ての区域カード',
+              icon: Icons.map_outlined,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AllTerritoriesScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildMenuButton(
+              context,
+              label: '他の人の報告',
+              icon: Icons.assignment_outlined,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ServiceReportScreen(),
+                  builder: (_) => const ServiceReportScreen(isOther: true),
                 ),
               ),
             ),
@@ -46,6 +71,7 @@ class ServiceReportMenuScreen extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final color = Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -53,7 +79,7 @@ class ServiceReportMenuScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+          border: Border.all(color: color, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
@@ -64,18 +90,18 @@ class ServiceReportMenuScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
+            Icon(icon, color: color, size: 28),
             const SizedBox(width: 16),
             Text(
               label,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: color,
               ),
             ),
             const Spacer(),
-            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
+            Icon(Icons.chevron_right, color: color),
           ],
         ),
       ),
