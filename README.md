@@ -22,8 +22,15 @@ flowchart TD
     F --> F4[公共エリア伝道\nPublicWitnessingTableScreen]
 
     F1 --> S[SheetViewScreen\n通常区域]
-    F2 --> F2a[マンション一覧]
+    F2 --> S3[SheetViewScreen\nAUTOLOCK]
     F3 --> S2[SheetViewScreen\n夜間区域]
+
+    H -->|確認ダイアログ| H0[支援メニュー\nSupportScreen]
+    H0 --> H1[通常区域\nAllTerritoriesScreen]
+    H0 --> H2[オートロック区域\nAllAutolockScreen]
+    H0 --> H3[他の人の報告\nServiceReportScreen]
+    H1 --> S
+    H2 --> S3
 
     G --> G1[公共エリア申請\nApplicationScreen]
     G --> G2[奉仕報告\nServiceReportScreen]
@@ -40,25 +47,27 @@ flowchart TD
 
 ## 図2：Firestore コレクション × 利用画面（表）
 
-| Firestoreコレクション | 初期化 | マイ区域 | 通常区域 | 夜間区域 | AL区域 | 公共申請 | 区域割当て | カード配布 | 区域情報登録 | 設定 |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| USER_LIST | ✓ | | | | | | | | | |
-| USER_SETTINGS | ✓ | | | | | | | | | ✓ |
-| CONFIG | ✓ | | | | | | | | | |
-| GROUP_LIST | ✓ | | | | | | ✓ | ✓ | | |
-| GROUP_ASS_NO | | ✓ | | | ✓ | | ✓ | | | |
-| CARD_ASSIGNMENTS | | ✓ | | | | | | ✓ | | |
-| AREA_LIST | | | | | | | ✓ | | | |
-| AREA_DATA_NORMAL | | | ✓ | | | | | | | |
-| AREA_DATA_NORMAL_HISTORY | | | ✓ | | | | | | | |
-| AREA_DATA_NIGHT | | | | ✓ | | | | | | |
-| AREA_DATA_NIGHT_HISTORY | | | | ✓ | | | | | | |
-| AUTOLOCK_LIST | | | | | ✓ | | ✓ | | | |
-| PUBLIC_WITNESSING_OPTIONS | | | | | | ✓ | | | | |
-| PUBLIC_WITNESSING | | | | | | ✓ | | | | |
-| VISIT_STATUS_OPTIONS | | | ✓ | | | | | | | |
-| AREA_INFO_REQUESTS | | | | | | | | | ✓ | |
-| ADMIN_NOTIFICATIONS | | | | | | | | | ✓ | |
+| Firestoreコレクション | 初期化 | マイ区域 | 通常区域 | 夜間区域 | AL区域 | 支援AL | 公共申請 | 区域割当て | カード配布 | 区域情報登録 | 設定 |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| USER_LIST | ✓ | | | | | | | | | | |
+| USER_SETTINGS | ✓ | | | | | | | | | | ✓ |
+| CONFIG | ✓ | | | | | | | | | | |
+| GROUP_LIST | ✓ | | | | | | | ✓ | ✓ | | |
+| GROUP_ASS_NO | | ✓ | | | ✓ | ✓ | | ✓ | | | |
+| CARD_ASSIGNMENTS | | ✓ | | | | | | | ✓ | | |
+| AREA_LIST | | | | | | | | ✓ | | | |
+| AREA_DATA_NORMAL | | | ✓ | | | | | | | | |
+| AREA_DATA_NORMAL_HISTORY | | | ✓ | | | | | | | | |
+| AREA_DATA_NIGHT | | | | ✓ | | | | | | | |
+| AREA_DATA_NIGHT_HISTORY | | | | ✓ | | | | | | | |
+| AUTOLOCK_LIST | | | | | ✓ | ✓ | | ✓ | | | |
+| AREA_DATA_AUTOLOCK | | | | | ✓ | ✓ | | | | | |
+| AREA_DATA_AUTOLOCK_HISTORY | | | | | ✓ | ✓ | | | | | |
+| PUBLIC_WITNESSING_OPTIONS | | | | | | | ✓ | | | | |
+| PUBLIC_WITNESSING | | | | | | | ✓ | | | | |
+| VISIT_STATUS_OPTIONS | | | ✓ | | | | | | | | |
+| AREA_INFO_REQUESTS | | | | | | | | | | ✓ | |
+| ADMIN_NOTIFICATIONS | | | | | | | | | | ✓ | |
 
 ## 図2：Firestore コレクション × 利用画面（グラフ）
 
@@ -84,6 +93,8 @@ graph LR
         FS17[VISIT_STATUS_OPTIONS]
         FS18[AREA_INFO_REQUESTS]
         FS19[ADMIN_NOTIFICATIONS]
+        FS20[AREA_DATA_AUTOLOCK]
+        FS21[AREA_DATA_AUTOLOCK_HISTORY]
     end
 
     subgraph App["📱 アプリ"]
@@ -98,6 +109,8 @@ graph LR
         A9[AdminOverallAssignment\n区域カード配布]
         A10[AreaInfoRegistration\n区域情報登録]
         A11[ColorSettingsScreen\n設定]
+        A12[SheetViewScreen\nAUTOLOCK]
+        A13[AllAutolockScreen\n支援AL一覧]
     end
 
     FS1 --> A1
@@ -114,8 +127,15 @@ graph LR
     FS11 --> A4
     FS5 --> A5
     FS12 --> A5
+    FS20 --> A5
+    FS21 --> A5
     FS5 --> A6
     FS10 --> A6
+
+    FS5 --> A13
+    FS12 --> A13
+    FS20 --> A13
+    FS21 --> A13
 
     FS13 --> A7
     FS14 --> A7
