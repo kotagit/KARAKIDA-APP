@@ -18,6 +18,8 @@ class SheetsProvider extends ChangeNotifier {
   String? _error;
   bool _isNightCard = false;
   bool get isNightCard => _isNightCard;
+  bool _isAutolockCard = false;
+  bool get isAutolockCard => _isAutolockCard;
 
   // Access control
   String? _currentUserName;
@@ -202,6 +204,7 @@ class SheetsProvider extends ChangeNotifier {
     _selectedCardName = null;
     _cardAddresses = [];
     _isNightCard = false;
+    _isAutolockCard = false;
     _selectedSpreadsheetId = null;
     _selectedSpreadsheetName = null;
     _data = [];
@@ -440,6 +443,25 @@ class SheetsProvider extends ChangeNotifier {
     }
   }
 
+  /// オートロックカードを選択してデータを読み込む
+  Future<void> selectAutolockCard(String cardName) async {
+    _selectedCardName = cardName;
+    _isNightCard = false;
+    _isAutolockCard = true;
+    _cardAddresses = [];
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _cardAddresses = await FirestoreService.getAutolockCardDataWithHistory(cardName);
+    } catch (e) {
+      _error = 'カードデータの取得に失敗しました: $e';
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
   /// 夜間カードを選択してデータを読み込む
   Future<void> selectNightCard(String cardName) async {
     _selectedCardName = cardName;
@@ -530,6 +552,10 @@ class SheetsProvider extends ChangeNotifier {
   void startListening() {
     if (_selectedCardName == null) return;
     stopListening();
+    if (_isAutolockCard) {
+      // AREA_DATA_AUTOLOCK にはリアルタイムリスナー不使用（手動リフレッシュのみ）
+      return;
+    }
     if (_isNightCard) {
       _addressesSub = FirestoreService.watchNightAddresses(_selectedCardName!).listen((addresses) async {
         _cardAddresses = await FirestoreService.getNightCardDataWithHistory(_selectedCardName!);

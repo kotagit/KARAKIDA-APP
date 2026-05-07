@@ -8,8 +8,10 @@ import '../services/firestore_service.dart';
 
 class SheetViewScreen extends StatefulWidget {
   final bool isNight;
+  final bool isAutolock;
   final String? assignedMemberName;
-  const SheetViewScreen({super.key, this.isNight = false, this.assignedMemberName});
+  final String? displayTitle;
+  const SheetViewScreen({super.key, this.isNight = false, this.isAutolock = false, this.assignedMemberName, this.displayTitle});
 
   @override
   State<SheetViewScreen> createState() => _SheetViewScreenState();
@@ -78,7 +80,11 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('区域No.${sheets.selectedCardName ?? ''}'),
+        title: Text(
+          widget.isAutolock
+              ? (widget.displayTitle ?? sheets.selectedCardName ?? '')
+              : '区域No.${sheets.selectedCardName ?? ''}',
+        ),
         titleTextStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
@@ -96,7 +102,11 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               if (sheets.selectedCardName != null) {
-                sheets.selectCard(sheets.selectedCardName!);
+                if (widget.isAutolock) {
+                  sheets.selectAutolockCard(sheets.selectedCardName!);
+                } else {
+                  sheets.selectCard(sheets.selectedCardName!);
+                }
               }
             },
           ),

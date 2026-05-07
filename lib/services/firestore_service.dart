@@ -210,6 +210,119 @@ class FirestoreService {
     }
   }
 
+  /// AUTOLOCK_LIST から区域番号ごとのマンション情報（name + buildno）を取得
+  static Future<Map<String, List<Map<String, dynamic>>>> getAutolockBuildingsDetailed() async {
+    try {
+      final snap = await _db
+          .collection('AUTOLOCK_LIST')
+          .get(const GetOptions(source: Source.server));
+      final result = <String, List<Map<String, dynamic>>>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final areano = data['areano'];
+        final buildno = data['buildno'];
+        final name = data['name']?.toString() ?? '';
+        if (name.isEmpty) continue;
+        final key = areano is int
+            ? areano.toString()
+            : areano is num
+                ? areano.toInt().toString()
+                : areano?.toString() ?? '';
+        if (key.isEmpty) continue;
+        final buildnoStr = buildno is int
+            ? buildno.toString()
+            : buildno is num
+                ? buildno.toInt().toString()
+                : buildno?.toString() ?? '';
+        result.putIfAbsent(key, () => []).add({'name': name, 'buildno': buildnoStr});
+      }
+      return result;
+    } catch (e) {
+      debugPrint('getAutolockBuildingsDetailed error: $e');
+      return {};
+    }
+  }
+
+  /// AREA_DATA_AUTOLOCK から住所一覧＋訪問履歴を取得
+  static Future<List<Map<String, dynamic>>> getAutolockCardDataWithHistory(
+    String cardName, {
+    int historyCount = 5,
+  }) async {
+    final parsed = _parseCardName(cardName);
+    if (parsed == null) return [];
+
+    QuerySnapshot<Map<String, dynamic>> snap;
+    snap = await _db
+        .collection('AREA_DATA_AUTOLOCK')
+        .where('area_id', isEqualTo: parsed.areaId)
+        .where('sheet_id', isEqualTo: parsed.sheetId)
+        .get();
+
+    if (snap.docs.isEmpty) {
+      snap = await _db
+          .collection('AREA_DATA_AUTOLOCK')
+          .where('area_id', isEqualTo: parsed.areaId.toString())
+          .where('sheet_id', isEqualTo: parsed.sheetId.toString())
+          .get();
+    }
+
+    if (snap.docs.isEmpty) return [];
+
+    // address_number でグループ化
+    final grouped = <int, List<Map<String, dynamic>>>{};
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final raw = data['address_number'];
+      final addrInt = raw is int
+          ? raw
+          : raw is double
+              ? raw.toInt()
+              : int.tryParse(raw?.toString() ?? '') ?? 0;
+      grouped.putIfAbsent(addrInt, () => []).add({'docId': doc.id, ...data});
+    }
+
+    final results = <Map<String, dynamic>>[];
+    final sortedKeys = grouped.keys.toList()..sort();
+
+    for (final addrNum in sortedKeys) {
+      final addrDocs = grouped[addrNum]!;
+      addrDocs.sort((a, b) {
+        final aDate = a['start_date'] as String? ?? '';
+        final bDate = b['start_date'] as String? ?? '';
+        return bDate.compareTo(aDate);
+      });
+
+      final latest = addrDocs.first;
+      final visits = addrDocs
+          .where((d) =>
+              (d['start_date'] as String? ?? '').isNotEmpty &&
+              (d['end_date'] as String? ?? '').isNotEmpty)
+          .take(historyCount)
+          .map((d) => {
+                'id': '${d['start_date']}_${d['end_date']}',
+                'startDate': d['start_date'] as String? ?? '',
+                'endDate': d['end_date'] as String? ?? '',
+                'staffName': d['staff_name'] as String? ?? '',
+                'statusResult': d['status_result'] as String? ?? '',
+              })
+          .toList();
+
+      results.add({
+        'id': addrNum.toString(),
+        'addressNumber': addrNum,
+        'townName': latest['town_name'] as String? ?? '',
+        'chome': latest['chome']?.toString() ?? '',
+        'gaiku': latest['block']?.toString() ?? '',
+        'targetName': latest['target_name'] as String? ?? '',
+        'note': latest['note'] as String? ?? '',
+        'rj': latest['RJ'] as String? ?? '',
+        'visits': visits,
+      });
+    }
+
+    return results;
+  }
+
   /// AREA_LIST から全ての区域番号 (areaId) の一覧を取得
   /// [type] を指定した場合は AREA_LIST の type フィールドでフィルタする
   static Future<List<String>> getAllAreaIds({String? type}) async {

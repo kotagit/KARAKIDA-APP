@@ -31,7 +31,7 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
   String? _error;
   List<String> _territories = [];
   Map<String, List<String>> _cardsByTerritory = {};
-  Map<String, List<String>> _autolockBuildings = {};
+  Map<String, List<Map<String, dynamic>>> _autolockBuildings = {};
   String? _selectedTerritory;
 
   @override
@@ -91,8 +91,8 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
       }
 
       final buildings = widget.type == 'AUTOLOCK'
-          ? await FirestoreService.getAutolockBuildings()
-          : <String, List<String>>{};
+          ? await FirestoreService.getAutolockBuildingsDetailed()
+          : <String, List<Map<String, dynamic>>>{};
 
       if (mounted) {
         setState(() {
@@ -251,38 +251,58 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (widget.type == 'AUTOLOCK') ...buildings.map((name) {
+                if (widget.type == 'AUTOLOCK') ...buildings.map((building) {
+                  final name = building['name'] as String? ?? '';
+                  final buildno = building['buildno'] as String? ?? '';
+                  final cardName = '$territory-$buildno';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade300),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      child: Row(
-                        children: [
-                          Icon(widget.cardIcon, color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
+                    child: GestureDetector(
+                      onTap: buildno.isNotEmpty
+                          ? () {
+                              sheets.selectAutolockCard(cardName);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SheetViewScreen(
+                                    isAutolock: true,
+                                    displayTitle: name,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        child: Row(
+                          children: [
+                            Icon(widget.cardIcon, color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                          ],
+                        ),
                       ),
                     ),
                   );
