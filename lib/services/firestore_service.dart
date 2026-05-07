@@ -2018,6 +2018,46 @@ class FirestoreService {
     debugPrint('updateAutolockVisitStatus: $cardName uid=$addressId status=$statusResult');
   }
 
+  /// 直近 [window] 以内に [cardName] に記録した自分以外のスタッフ一覧を返す
+  static Future<List<Map<String, dynamic>>> getRecentAutolockEditors(
+    String cardName, {
+    Duration window = const Duration(minutes: 10),
+    String? excludeStaff,
+  }) async {
+    final parsed = _parseCardName(cardName);
+    if (parsed == null) return [];
+
+    // timestamp の複合インデックスが不要なよう Dart 側でフィルタ
+    // buildNum は int/string 両対応でフォールバック
+    QuerySnapshot<Map<String, dynamic>> snap;
+    snap = await _db
+        .collection('AREA_DATA_AUTOLOCK_HISTORY')
+        .where('areaId', isEqualTo: parsed.areaId)
+        .where('buildNum', isEqualTo: parsed.sheetId)
+        .get();
+
+    if (snap.docs.isEmpty) {
+      snap = await _db
+          .collection('AREA_DATA_AUTOLOCK_HISTORY')
+          .where('areaId', isEqualTo: parsed.areaId.toString())
+          .where('buildNum', isEqualTo: parsed.sheetId.toString())
+          .get();
+    }
+
+    final since = DateTime.now().subtract(window);
+    return snap.docs
+        .map((d) => d.data())
+        .where((d) {
+          final staff = d['staffName'] as String? ?? '';
+          if (staff.isEmpty || staff == excludeStaff) return false;
+          final ts = d['timestamp'];
+          if (ts == null) return false;
+          final dt = ts is Timestamp ? ts.toDate() : null;
+          return dt != null && dt.isAfter(since);
+        })
+        .toList();
+  }
+
   /// 夜間カードの変更をリアルタイムで監視
   /// アプリが書き込んだレコードには area_id / sheet_id が付与されるため、
   /// それを使って AREA_DATA_NIGHT_HISTORY を監視する。

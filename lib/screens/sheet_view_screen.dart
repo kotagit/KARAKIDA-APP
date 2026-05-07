@@ -36,6 +36,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     _historyScrollController.addListener(_syncHistoryToMain);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SheetsProvider>().startListening();
+      if (widget.isAutolock) {
+        _checkRecentAutolockEditors();
+      }
     });
     _loadStatusOptions();
   }
@@ -45,6 +48,55 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
       final opts = await FirestoreService.getVisitStatusOptions();
       if (mounted) setState(() => _statusOptions = opts);
     } catch (_) {}
+  }
+
+  Future<void> _checkRecentAutolockEditors() async {
+    final sheets = context.read<SheetsProvider>();
+    // カードデータ読み込み完了を待つ
+    if (sheets.isLoading) {
+      await Future.doWhile(() async {
+        await Future.delayed(const Duration(milliseconds: 200));
+        return mounted && context.read<SheetsProvider>().isLoading;
+      });
+    }
+    if (!mounted) return;
+
+    final editors = context.read<SheetsProvider>().recentAutolockEditors;
+    if (editors.isEmpty) return;
+
+    // スタッフ名と記録時刻を整理（重複除去）
+    final seen = <String>{};
+    final lines = <String>[];
+    for (final e in editors) {
+      final name = e['staffName'] as String? ?? '';
+      if (seen.add(name)) lines.add(name);
+    }
+
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('警告'),
+          ],
+        ),
+        content: const Text(
+          '直近10分以内に別の方がこの物件を訪問しました。',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              context.read<SheetsProvider>().clearRecentAutolockEditors();
+              Navigator.pop(ctx);
+            },
+            child: const Text('確認しました'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _syncMainToHistory() {
