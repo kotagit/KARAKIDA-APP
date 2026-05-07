@@ -694,7 +694,7 @@ class SheetsProvider extends ChangeNotifier {
       final latestTimestamps = <String, DateTime>{};
 
       for (final a in assignments) {
-        final cardName = _normCardName(a['cardName'] as String? ?? '');
+        final cardName = FirestoreService.cardNameFromDoc(a);
         final memberName = a['memberName'] as String? ?? '';
         final ts = a['timestamp'];
         DateTime? rowTime;
@@ -775,10 +775,14 @@ class SheetsProvider extends ChangeNotifier {
     String territoryNumber,
     List<List<dynamic>> data, {
     bool isNight = false,
-    String? startDate,
-    String? endDate,
   }) async {
     try {
+      final type = isNight ? 'NIGHT' : 'NORMAL';
+      final assignment = await FirestoreService.getLatestGroupAssignment(groupName, type: type);
+      final startDate = assignment.startDate ?? _visitStartDate;
+      final endDate = assignment.endDate ?? _visitEndDate;
+      debugPrint('saveGroupMembersToData3: period from GROUP_ASS_NO = ${assignment.startDate} ~ ${assignment.endDate}, fallback CONFIG = $_visitStartDate ~ $_visitEndDate, effective = $startDate ~ $endDate');
+
       await FirestoreService.saveAssignmentsBatch(
         groupName,
         territoryNumber,

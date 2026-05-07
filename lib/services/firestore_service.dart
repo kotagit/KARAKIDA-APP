@@ -611,6 +611,71 @@ class FirestoreService {
     }
   }
 
+  /// S-13用: 全区域の割当て一覧を返す（区域番号・監督名・開始日付・終了日付）
+  /// type=NORMAL のみ対象。区域ごとに最新の startDate のレコードを取得し、
+  /// USER_LIST の status4='SV' から各グループの監督名を結合する。
+  static Future<List<Map<String, dynamic>>> getTerritoryTableData() async {
+    try {
+      final snap = await _db
+          .collection('GROUP_ASS_NO')
+          .get(const GetOptions(source: Source.server));
+
+      final svSnap = await _db
+          .collection('USER_LIST')
+          .where('status4', isEqualTo: 'SV')
+          .get();
+      final supervisorByGroup = <String, String>{};
+      for (final doc in svSnap.docs) {
+        final d = doc.data();
+        final g = (d['group'] as String? ?? '').trim();
+        final n = (d['name'] as String? ?? '').trim();
+        if (g.isNotEmpty && n.isNotEmpty) supervisorByGroup[g] = n;
+      }
+
+      final latestByTerritory = <String, Map<String, dynamic>>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        if ((data['type'] ?? 'NORMAL').toString().trim() != 'NORMAL') continue;
+        final territory = data['territories']?.toString() ?? '';
+        if (territory.isEmpty) continue;
+        final sd = (data['startDate'] ?? '').toString().trim();
+        if (!latestByTerritory.containsKey(territory)) {
+          latestByTerritory[territory] = data;
+        } else {
+          final existingDt = _parseDate(latestByTerritory[territory]!['startDate']?.toString() ?? '');
+          final newDt = _parseDate(sd);
+          if (newDt != null && (existingDt == null || newDt.isAfter(existingDt))) {
+            latestByTerritory[territory] = data;
+          }
+        }
+      }
+
+      final rows = latestByTerritory.entries.map((e) {
+        final data = e.value;
+        final groupName = (data['groupName'] ?? '').toString();
+        return {
+          'territory': e.key,
+          'groupName': groupName,
+          'supervisorName': supervisorByGroup[groupName] ?? '',
+          'startDate': (data['startDate'] ?? '').toString(),
+          'endDate': (data['endDate'] ?? '').toString(),
+        };
+      }).toList();
+
+      rows.sort((a, b) {
+        final na = int.tryParse(a['territory'] as String);
+        final nb = int.tryParse(b['territory'] as String);
+        if (na != null && nb != null) return na.compareTo(nb);
+        return (a['territory'] as String).compareTo(b['territory'] as String);
+      });
+
+      return rows;
+    } catch (e) {
+      debugPrint('getTerritoryTableData error: $e');
+      return [];
+    }
+  }
+
   /// "yyyy/M/d" 形式の文字列を DateTime に変換するヘルパー
   /// 全グループの区域割当てを一旦クリアして一括保存
   static Future<bool> saveAllGroupAssignments({
@@ -814,6 +879,20 @@ class FirestoreService {
   // CARD_ASSIGNMENTS コレクション（カード割当て）
   // ──────────────────────────────────────────────
 
+  /// areaId/sheetId フィールドがあればそれを使い、古い cardName フィールドにフォールバック
+  /// CARD_ASSIGNMENTS から "areaId-sheetId" 形式のカード名を復元する
+  /// 新データ: territoryNumber="2", cardName="1" → "2-1"
+  /// 旧データ: cardName="2-1" → "2-1"（後方互換）
+  static String cardNameFromDoc(Map<String, dynamic> data) {
+    final territoryNumber = data['territoryNumber']?.toString() ?? '';
+    final cardName = _normCardName(data['cardName']?.toString() ?? '');
+    // cardName がシートIDのみ（数字のみ、ハイフンなし）なら territoryNumber と結合
+    if (territoryNumber.isNotEmpty && cardName.isNotEmpty && !cardName.contains('-')) {
+      return '$territoryNumber-$cardName';
+    }
+    return cardName;
+  }
+
   static Future<List<Map<String, dynamic>>> getAssignmentsForGroup(String groupName) async {
     final snap = await _db
         .collection('CARD_ASSIGNMENTS')
@@ -829,12 +908,12 @@ class FirestoreService {
   }) async {
     Query<Map<String, dynamic>> query = _db
         .collection('CARD_ASSIGNMENTS')
-        .where('territoryNumber', isEqualTo: territoryNumber);
+        .where('territoryNumber', isEqualTo: int.tryParse(territoryNumber) ?? territoryNumber);
     if (!isNight) {
       query = query.where('groupName', isEqualTo: groupName);
     }
-    final snap = await query.get();
-    
+    final snap = await query.get(const GetOptions(source: Source.server));
+
     if (snap.docs.isEmpty) return [];
 
     // カードごとに最新の startDate を持つドキュメントを返す
@@ -842,23 +921,34 @@ class FirestoreService {
     //  他のカードの割当てが取得されなくなるため、カード単位で最新を選択する)
     final latestByCard = <String, Map<String, dynamic>>{};
     final latestDateByCard = <String, DateTime>{};
+    final latestTsByCard = <String, Timestamp>{};
 
     for (final doc in snap.docs) {
       final data = doc.data();
-      final cardName = _normCardName(data['cardName'] as String? ?? '');
+      final cardName = cardNameFromDoc(data);
       if (cardName.isEmpty) continue;
 
       final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
       final date = _parseDate(sdStr);
+      final ts = data['timestamp'];
+      final rowTs = ts is Timestamp ? ts : null;
 
       if (!latestByCard.containsKey(cardName)) {
         latestByCard[cardName] = data;
         if (date != null) latestDateByCard[cardName] = date;
+        if (rowTs != null) latestTsByCard[cardName] = rowTs;
       } else {
         final existingDate = latestDateByCard[cardName];
-        if (date != null && (existingDate == null || date.isAfter(existingDate))) {
+        final existingTs = latestTsByCard[cardName];
+        final dateIsNewer = date != null && (existingDate == null || date.isAfter(existingDate));
+        final datesEqual = date != null && existingDate != null &&
+            !date.isAfter(existingDate) && !existingDate.isAfter(date);
+        final bothDateNull = date == null && existingDate == null;
+        final tsIsNewer = rowTs != null && (existingTs == null || rowTs.compareTo(existingTs) > 0);
+        if (dateIsNewer || ((datesEqual || bothDateNull) && tsIsNewer)) {
           latestByCard[cardName] = data;
-          latestDateByCard[cardName] = date;
+          if (date != null) latestDateByCard[cardName] = date;
+          if (rowTs != null) latestTsByCard[cardName] = rowTs;
         }
       }
     }
@@ -880,7 +970,7 @@ class FirestoreService {
 
     for (final doc in snap.docs) {
       final data = doc.data();
-      final cardName = _normCardName(data['cardName'] as String? ?? '');
+      final cardName = cardNameFromDoc(data);
       final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
       final date = _parseDate(sdStr);
 
@@ -896,7 +986,7 @@ class FirestoreService {
     final cardNames = <String>{};
     for (final doc in snap.docs) {
       final data = doc.data();
-      final cardName = _normCardName(data['cardName'] as String? ?? '');
+      final cardName = cardNameFromDoc(data);
       final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
 
       if (cardName.isNotEmpty && sdStr != null && sdStr == latestStrPerCard[cardName]) {
@@ -909,7 +999,7 @@ class FirestoreService {
       final latestByTs = <String, Map<String, dynamic>>{};
       for (final doc in snap.docs) {
         final data = doc.data();
-        final cardName = _normCardName(data['cardName'] as String? ?? '');
+        final cardName = cardNameFromDoc(data);
         if (cardName.isEmpty) continue;
         final ts = data['timestamp'] as Timestamp?;
         
@@ -963,7 +1053,7 @@ class FirestoreService {
       final latestStrPerCard = <String, String>{};
       for (final doc in docs) {
         final data = doc.data();
-        final cardName = _normCardName(data['cardName'] as String? ?? '');
+        final cardName = cardNameFromDoc(data);
         final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
         final date = _parseDate(sdStr);
         if (cardName.isEmpty || date == null) continue;
@@ -976,7 +1066,7 @@ class FirestoreService {
       final cardNames = <String>{};
       for (final doc in docs) {
         final data = doc.data();
-        final cardName = _normCardName(data['cardName'] as String? ?? '');
+        final cardName = cardNameFromDoc(data);
         final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
         if (cardName.isNotEmpty && sdStr != null && sdStr == latestStrPerCard[cardName]) {
           cardNames.add(cardName);
@@ -986,7 +1076,7 @@ class FirestoreService {
       // startDate がないデータへのフォールバック
       if (cardNames.isEmpty) {
         for (final doc in docs) {
-          final cardName = _normCardName(doc.data()['cardName'] as String? ?? '');
+          final cardName = cardNameFromDoc(doc.data());
           if (cardName.isNotEmpty) cardNames.add(cardName);
         }
       }
@@ -1016,15 +1106,19 @@ class FirestoreService {
     String? startDate,
     String? endDate,
   }) async {
-    final suffix = startDate != null ? '_$startDate' : '';
-    final docId = '${groupName}_${territoryNumber}_${_normCardName(cardName)}$suffix';
+    final normalized = _normCardName(cardName);
+    final parts = normalized.split('-');
+    final areaId = parts[0];
+    final sheetId = parts.length > 1 ? parts[1] : '1';
+    final safeDate = startDate != null ? '_${startDate.replaceAll('/', '_')}' : '';
+    final docId = '${groupName}_${areaId}_$sheetId$safeDate';
     await _db.collection('CARD_ASSIGNMENTS').doc(docId).set({
       'groupName': groupName,
-      'territoryNumber': territoryNumber,
-      'cardName': _normCardName(cardName),
+      'territoryNumber': areaId,
+      'cardName': int.tryParse(sheetId) ?? sheetId,
       'memberName': memberName,
-      'start_date': startDate,
-      'end_date': endDate,
+      'startDate': startDate,
+      'endDate': endDate,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -1060,17 +1154,21 @@ class FirestoreService {
             
             if (memberName.isEmpty) continue;
             
-            final normalizedCardName = _normCardName(cardName);
-            
-            // 1. 履歴保持用
-            final historyDocId = '${targetGroup}_${territoryNumber}_${normalizedCardName}_$effectiveStartDate';
+            final normalized = _normCardName(cardName);
+            final parts = normalized.split('-');
+            final areaId = parts[0];
+            final sheetId = parts.length > 1 ? parts[1] : '1';
+
+            // 1. 履歴保持用（ミリ秒タイムスタンプで毎回ユニーク）
+            final tsMillis = DateTime.now().millisecondsSinceEpoch;
+            final historyDocId = '${targetGroup}_${areaId}_${sheetId}_$tsMillis';
             // 2. 最新状態保持用
-            final latestDocId = '${targetGroup}_${territoryNumber}_$normalizedCardName';
-            
+            final latestDocId = '${targetGroup}_${areaId}_$sheetId';
+
             final data = {
               'groupName': targetGroup,
-              'territoryNumber': territoryNumber,
-              'cardName': normalizedCardName,
+              'territoryNumber': areaId,
+              'cardName': int.tryParse(sheetId) ?? sheetId,
               'memberName': memberName,
               'startDate': effectiveStartDate,
               'endDate': endDate,
@@ -1261,9 +1359,12 @@ class FirestoreService {
 
     for (int i = 0; i < cardNames.length; i += 30) {
       final batch = cardNames.sublist(i, (i + 30).clamp(0, cardNames.length));
-      final docIds = batch
-          .map((c) => '${groupName}_${territoryNumber}_${_normCardName(c)}')
-          .toList();
+      final docIds = batch.map((c) {
+        final parts = _normCardName(c).split('-');
+        final areaId = parts[0];
+        final sheetId = parts.length > 1 ? parts[1] : '1';
+        return '${groupName}_${areaId}_$sheetId';
+      }).toList();
 
       QuerySnapshot<Map<String, dynamic>> snap;
       try {
@@ -1281,7 +1382,7 @@ class FirestoreService {
 
       for (final doc in snap.docs) {
         final data = doc.data();
-        final cardName = _normCardName(data['cardName']?.toString() ?? '');
+        final cardName = cardNameFromDoc(data);
         final memberName = data['memberName']?.toString() ?? '';
         if (cardName.isNotEmpty && memberName.isNotEmpty) {
           results[cardName] = memberName;

@@ -6,6 +6,7 @@ import 'admin_group_territory_assignment_screen.dart';
 import 'admin_overall_assignment_screen.dart';
 import 'admin_public_witnessing_screen.dart';
 import 'application_screen.dart';
+import 'admin_territory_table_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -122,6 +123,16 @@ class AdminScreen extends StatelessWidget {
                       type: 'AUTOLOCK',
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuButton(
+                context,
+                label: 'S-13',
+                icon: Icons.table_rows_outlined,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminTerritoryTableScreen()),
                 ),
               ),
             ],

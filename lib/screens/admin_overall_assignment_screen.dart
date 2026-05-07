@@ -131,8 +131,6 @@ class _AdminOverallAssignmentScreenState
           entry.key,
           entry.value,
           isNight: widget.isNight,
-          startDate: sheets.visitStartDate,
-          endDate: sheets.visitEndDate,
         );
       }
 

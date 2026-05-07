@@ -187,8 +187,6 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
         widget.territoryNumber,
         rowsToWrite,
         isNight: widget.isNight,
-        startDate: sheets.visitStartDate,
-        endDate: sheets.visitEndDate,
       );
 
       if (mounted) {

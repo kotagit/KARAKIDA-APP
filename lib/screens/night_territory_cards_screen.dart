@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../providers/sheets_provider.dart';
@@ -30,11 +31,14 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
   
 
   bool _loading = true;
+  bool _refreshing = false;
   String? _error;
   List<String> _territories = [];
   Map<String, List<String>> _cardsByTerritory = {};
   Map<String, List<Map<String, dynamic>>> _autolockBuildings = {};
   String? _selectedTerritory;
+  Set<String> _recentVisitCards = {};
+  DateTime? _lastUpdated;
 
   @override
   void initState() {
@@ -42,10 +46,9 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool isRefresh = false}) async {
+    if (isRefresh) setState(() => _refreshing = true);
     try {
-      // 1. 割り当てられた区域番号を取得（AUTOLOCK はユーザーのグループ、NIGHT は会衆全体）
-      //    startDate が今日以前の最新割当てを使用
       final groupName = widget.type == 'AUTOLOCK'
           ? (context.read<SheetsProvider>().currentUserGroupName ?? '')
           : '会衆';
@@ -55,7 +58,6 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
         currentOnly: true,
       );
 
-      // 2. 区域番号プレフィックスを抽出してソート
       final prefixes = rawTerritories
           .map((e) => e.split('-')[0].trim())
           .where((p) => p.isNotEmpty)
@@ -68,7 +70,6 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
           return a.compareTo(b);
         });
 
-      // 3. 各区域のカード一覧を取得（夜間は AREA_DATA_NIGHT から取得）
       final cardsByTerritory = <String, List<String>>{};
       for (final t in prefixes) {
         final cards = widget.type == 'NIGHT'
@@ -96,13 +97,36 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
           ? await FirestoreService.getAutolockBuildingsDetailed()
           : <String, List<Map<String, dynamic>>>{};
 
+      // AUTOLOCK のみ直近10分の訪問記録を一括取得
+      final recentCards = <String>{};
+      if (widget.type == 'AUTOLOCK') {
+        final since = Timestamp.fromDate(
+            DateTime.now().subtract(const Duration(minutes: 10)));
+        final histSnap = await FirebaseFirestore.instance
+            .collection('AREA_DATA_AUTOLOCK_HISTORY')
+            .where('timestamp', isGreaterThan: since)
+            .get();
+        for (final doc in histSnap.docs) {
+          final data = doc.data();
+          final areaId = data['areaId']?.toString() ?? '';
+          final buildNum = data['buildNum']?.toString() ?? '';
+          if (areaId.isNotEmpty && buildNum.isNotEmpty) {
+            recentCards.add('$areaId-$buildNum');
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _territories = prefixes;
           _cardsByTerritory = cardsByTerritory;
           _autolockBuildings = buildings;
+          _recentVisitCards = recentCards;
+          _lastUpdated = DateTime.now();
           _selectedTerritory = prefixes.isNotEmpty ? prefixes.first : null;
           _loading = false;
+          _refreshing = false;
+          _error = null;
         });
       }
     } catch (e) {
@@ -110,9 +134,16 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
         setState(() {
           _error = '読み込みに失敗しました: $e';
           _loading = false;
+          _refreshing = false;
         });
       }
     }
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m更新';
   }
 
   @override
@@ -128,6 +159,28 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
           color: Colors.white,
         ),
         actions: [
+          if (widget.type == 'AUTOLOCK' && _lastUpdated != null && !_loading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  _formatTime(_lastUpdated!),
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+              ),
+            ),
+          if (widget.type == 'AUTOLOCK' && !_loading)
+            IconButton(
+              icon: _refreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh, color: Colors.white),
+              onPressed: _refreshing ? null : () => _load(isRefresh: true),
+            ),
           if (sheets.currentUserName != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -257,6 +310,7 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                   final name = building['name'] as String? ?? '';
                   final buildno = building['buildno'] as String? ?? '';
                   final cardName = '$territory-$buildno';
+                  final hasRecentVisit = _recentVisitCards.contains(cardName);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: GestureDetector(
@@ -278,7 +332,10 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: hasRecentVisit ? Colors.orange : Colors.grey.shade300,
+                            width: hasRecentVisit ? 1.5 : 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.04),
@@ -287,8 +344,11 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                        child: Row(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Row(
                           children: [
                             Icon(widget.cardIcon, color: Theme.of(context).colorScheme.primary),
                             const SizedBox(width: 12),
@@ -303,6 +363,26 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                               ),
                             ),
                             Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                          ],
+                        ),
+                        if (hasRecentVisit) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: const [
+                              Icon(Icons.warning_amber_rounded,
+                                  color: Colors.orange, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                '10分以内に訪問者あり',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                           ],
                         ),
                       ),

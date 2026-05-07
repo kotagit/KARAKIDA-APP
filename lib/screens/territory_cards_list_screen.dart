@@ -38,17 +38,17 @@ class _TerritoryCardsListScreenState extends State<TerritoryCardsListScreen> {
       // 1. カード一覧取得（キャッシュ優先）
       final cards = await FirestoreService.getCardsForTerritory(widget.territoryNumber);
 
-      // 2. カード名を抽出し、ドキュメントID直接指定で最新割当てのみ取得（履歴スキップ）
-      final cardNames = cards
-          .map((c) => c['id'] as String? ?? '')
-          .where((s) => s.isNotEmpty)
-          .toList();
-
-      final assignmentMap = await FirestoreService.getLatestAssignmentsByDocId(
+      // 2. カード割当てをフィールド検索で取得（旧・新ドキュメントID両対応）
+      final assignments = await FirestoreService.getAssignmentsForTerritory(
         widget.groupName,
         widget.territoryNumber,
-        cardNames,
       );
+      final assignmentMap = <String, String>{};
+      for (final a in assignments) {
+        final id = FirestoreService.cardNameFromDoc(a);
+        final member = a['memberName']?.toString() ?? '';
+        if (id.isNotEmpty && member.isNotEmpty) assignmentMap[id] = member;
+      }
 
       final grouped = <String, List<String>>{};
       for (final card in cards) {
