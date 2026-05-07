@@ -26,6 +26,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
 
   static const double _sectionRowHeight = 32.0;
   static const double _dataRowHeight = 60.0;
+  static const double _autolockRowHeight = 44.0;
   static const double _historyDateHeaderHeight = 40.0;
 
   @override
@@ -230,7 +231,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
                       );
                     }
                     return SizedBox(
-                      height: _dataRowHeight,
+                      height: widget.isAutolock ? _autolockRowHeight : _dataRowHeight,
                       child: _buildPersonRow(sheets, item.data, visitId),
                     );
                   },
@@ -330,7 +331,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
                                   );
                                 }
                                 return SizedBox(
-                                  height: _dataRowHeight,
+                                  height: widget.isAutolock ? _autolockRowHeight : _dataRowHeight,
                                   child: _buildHistoryRow(item.data),
                                 );
                               },
@@ -466,7 +467,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     final townName = addr['townName'] as String? ?? '';
     const String displayNo = '';
     final townChome = townName + chome;
-    final rawLabel = [townChome, gaiku, no].where((s) => s.isNotEmpty).join('-');
+    final rawLabel = widget.isAutolock
+        ? no
+        : [townChome, gaiku, no].where((s) => s.isNotEmpty).join('-');
     final houseName = addr['targetName'] as String? ?? '';
     final displayLabel = houseName.isNotEmpty ? '$rawLabel（$houseName）' : rawLabel;
     final status = _getCurrentStatus(addr, visitId);

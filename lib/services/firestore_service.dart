@@ -243,7 +243,7 @@ class FirestoreService {
     }
   }
 
-  /// AREA_DATA_AUTOLOCK から住所一覧＋訪問履歴を取得
+  /// AREA_DATA_AUTOLOCK から住所一覧＋訪問履歴を取得（AREA_DATA_NIGHT と同構造）
   static Future<List<Map<String, dynamic>>> getAutolockCardDataWithHistory(
     String cardName, {
     int historyCount = 5,
@@ -251,74 +251,133 @@ class FirestoreService {
     final parsed = _parseCardName(cardName);
     if (parsed == null) return [];
 
-    QuerySnapshot<Map<String, dynamic>> snap;
-    snap = await _db
+    // 1. 住所マスタ取得（buildNum フィールドを使用）
+    var addrSnap = await _db
         .collection('AREA_DATA_AUTOLOCK')
-        .where('area_id', isEqualTo: parsed.areaId)
-        .where('sheet_id', isEqualTo: parsed.sheetId)
+        .where('areaId', isEqualTo: parsed.areaId)
+        .where('buildNum', isEqualTo: parsed.sheetId)
         .get();
 
-    if (snap.docs.isEmpty) {
-      snap = await _db
+    if (addrSnap.docs.isEmpty) {
+      addrSnap = await _db
           .collection('AREA_DATA_AUTOLOCK')
-          .where('area_id', isEqualTo: parsed.areaId.toString())
-          .where('sheet_id', isEqualTo: parsed.sheetId.toString())
+          .where('areaId', isEqualTo: parsed.areaId.toString())
+          .where('buildNum', isEqualTo: parsed.sheetId.toString())
           .get();
     }
 
-    if (snap.docs.isEmpty) return [];
-
-    // address_number でグループ化
-    final grouped = <int, List<Map<String, dynamic>>>{};
-    for (final doc in snap.docs) {
-      final data = doc.data();
-      final raw = data['address_number'];
-      final addrInt = raw is int
-          ? raw
-          : raw is double
-              ? raw.toInt()
-              : int.tryParse(raw?.toString() ?? '') ?? 0;
-      grouped.putIfAbsent(addrInt, () => []).add({'docId': doc.id, ...data});
+    debugPrint('getAutolockCardData: card=$cardName → ${addrSnap.docs.length} docs');
+    if (addrSnap.docs.isEmpty) {
+      final sample = await _db.collection('AREA_DATA_AUTOLOCK').limit(1).get();
+      if (sample.docs.isNotEmpty) {
+        debugPrint('sample fields: ${sample.docs.first.data().keys.toList()}');
+        debugPrint('sample data: ${sample.docs.first.data()}');
+      } else {
+        debugPrint('AREA_DATA_AUTOLOCK: コレクションが空です');
+      }
+      return [];
     }
 
-    final results = <Map<String, dynamic>>[];
-    final sortedKeys = grouped.keys.toList()..sort();
+    // 2. 全アドレスを doc.id をキーで保持（uid 重複問題を回避）
+    final docIdToAddr = <String, Map<String, dynamic>>{};
+    final docIdToUid = <String, String>{};
+    for (final doc in addrSnap.docs) {
+      final data = doc.data();
+      docIdToAddr[doc.id] = data;
+      final uid = data['uid'] as String?;
+      if (uid != null && uid.isNotEmpty) docIdToUid[doc.id] = uid;
+    }
 
-    for (final addrNum in sortedKeys) {
-      final addrDocs = grouped[addrNum]!;
-      addrDocs.sort((a, b) {
-        final aDate = a['start_date'] as String? ?? '';
-        final bDate = b['start_date'] as String? ?? '';
-        return bDate.compareTo(aDate);
+    // 3. uid が存在するものだけ履歴取得
+    final histByUid = <String, List<Map<String, dynamic>>>{};
+    final uids = docIdToUid.values.toSet().toList();
+    for (int i = 0; i < uids.length; i += 30) {
+      final batch = uids.sublist(i, (i + 30).clamp(0, uids.length));
+      final histSnap = await _db
+          .collection('AREA_DATA_AUTOLOCK_HISTORY')
+          .where('uid', whereIn: batch)
+          .get();
+      for (final doc in histSnap.docs) {
+        final data = {'docId': doc.id, ...doc.data()};
+        final uid = data['uid'] as String? ?? '';
+        if (uid.isNotEmpty) histByUid.putIfAbsent(uid, () => []).add(data);
+      }
+    }
+
+    // 4. 結合してリストを組み立て
+    final results = <Map<String, dynamic>>[];
+    for (final entry in docIdToAddr.entries) {
+      final docId = entry.key;
+      final addr = entry.value;
+      final uid = docIdToUid[docId] ?? '';
+      final buildName = addr['buildName'] as String? ?? '';
+      final roomNumRaw = (addr['roomNum'] ?? addr['room_num'])?.toString() ?? '';
+      final houseNum = (addr['houseNum'] ?? addr['house_num'])?.toString() ?? '';
+      final roomNum = houseNum.isNotEmpty ? '$roomNumRaw-$houseNum' : roomNumRaw;
+      debugPrint('autolock: roomNum=$roomNumRaw houseNum=$houseNum → $roomNum, fields=${addr.keys.toList()}');
+      final houseName = addr['houseName'] as String? ?? '';
+
+      String toDateStr(dynamic v) {
+        if (v == null) return '';
+        if (v is String) return v;
+        if (v is Timestamp) {
+          final dt = v.toDate().add(const Duration(hours: 9));
+          return '${dt.year}/${dt.month}/${dt.day}';
+        }
+        if (v is DateTime) return '${v.year}/${v.month}/${v.day}';
+        return v.toString();
+      }
+
+      final histDocs = histByUid[uid] ?? [];
+      histDocs.sort((a, b) {
+        final aStr = toDateStr(a['startDate'] ?? a['start_date']);
+        final bStr = toDateStr(b['startDate'] ?? b['start_date']);
+        return bStr.compareTo(aStr);
       });
 
-      final latest = addrDocs.first;
-      final visits = addrDocs
-          .where((d) =>
-              (d['start_date'] as String? ?? '').isNotEmpty &&
-              (d['end_date'] as String? ?? '').isNotEmpty)
+      final visits = histDocs
+          .where((d) {
+            final sd = toDateStr(d['startDate'] ?? d['start_date']);
+            final ed = toDateStr(d['endDate'] ?? d['end_date']);
+            return sd.isNotEmpty && ed.isNotEmpty;
+          })
           .take(historyCount)
-          .map((d) => {
-                'id': '${d['start_date']}_${d['end_date']}',
-                'startDate': d['start_date'] as String? ?? '',
-                'endDate': d['end_date'] as String? ?? '',
-                'staffName': d['staff_name'] as String? ?? '',
-                'statusResult': d['status_result'] as String? ?? '',
-              })
+          .map((d) {
+            final sd = toDateStr(d['startDate'] ?? d['start_date']);
+            final ed = toDateStr(d['endDate'] ?? d['end_date']);
+            return {
+              'id': '${sd}_$ed',
+              'startDate': sd,
+              'endDate': ed,
+              'staffName': (d['staffName'] ?? d['staff_name']) as String? ?? '',
+              'statusResult': (d['visitResult'] ?? d['status_result']) as String? ?? '',
+            };
+          })
           .toList();
 
       results.add({
-        'id': addrNum.toString(),
-        'addressNumber': addrNum,
-        'townName': latest['town_name'] as String? ?? '',
-        'chome': latest['chome']?.toString() ?? '',
-        'gaiku': latest['block']?.toString() ?? '',
-        'targetName': latest['target_name'] as String? ?? '',
-        'note': latest['note'] as String? ?? '',
-        'rj': latest['RJ'] as String? ?? '',
+        'id': docId,
+        'addressNumber': roomNum,
+        'townName': _floorTag(roomNumRaw),
+        'targetName': houseName,
+        'note': addr['addressCheck'] as String? ?? '',
+        'rj': addr['reject'] as String? ?? '',
         'visits': visits,
       });
     }
+
+    // 階数 → roomNum の順でソート
+    results.sort((a, b) {
+      final aTown = a['townName'] as String? ?? '';
+      final bTown = b['townName'] as String? ?? '';
+      if (aTown != bTown) return aTown.compareTo(bTown);
+      final aNum = a['addressNumber'] as String? ?? '';
+      final bNum = b['addressNumber'] as String? ?? '';
+      final an = int.tryParse(aNum);
+      final bn = int.tryParse(bNum);
+      if (an != null && bn != null) return an.compareTo(bn);
+      return aNum.compareTo(bNum);
+    });
 
     return results;
   }
@@ -1080,6 +1139,15 @@ class FirestoreService {
     final sheetId = int.tryParse(parts[1]);
     if (areaId == null || sheetId == null) return null;
     return (areaId: areaId, sheetId: sheetId);
+  }
+
+  /// roomNum から階数タグを生成（例: "101"→"1F", "B201"→"2F", "1001"→"10F"）
+  static String _floorTag(String roomNumRaw) {
+    final digits = roomNumRaw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length == 1) return '${digits}F';
+    if (digits.length == 3) return '${digits[0]}F';
+    if (digits.length == 4) return '${digits.substring(0, 2)}F';
+    return roomNumRaw;
   }
 
   /// カード内の全ドキュメントを一括取得
