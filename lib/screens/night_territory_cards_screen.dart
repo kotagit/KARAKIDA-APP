@@ -31,6 +31,7 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
   String? _error;
   List<String> _territories = [];
   Map<String, List<String>> _cardsByTerritory = {};
+  Map<String, List<String>> _autolockBuildings = {};
   String? _selectedTerritory;
 
   @override
@@ -41,10 +42,13 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
 
   Future<void> _load() async {
     try {
-      // 1. 会衆 + NIGHT に割り当てられた区域番号を取得
+      // 1. 割り当てられた区域番号を取得（AUTOLOCK はユーザーのグループ、NIGHT は会衆全体）
       //    startDate が今日以前の最新割当てを使用
+      final groupName = widget.type == 'AUTOLOCK'
+          ? (context.read<SheetsProvider>().currentUserGroupName ?? '')
+          : '会衆';
       final rawTerritories = await FirestoreService.getTerritoriesForGroup(
-        '会衆',
+        groupName,
         type: widget.type,
         currentOnly: true,
       );
@@ -86,10 +90,15 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
         cardsByTerritory[t] = names;
       }
 
+      final buildings = widget.type == 'AUTOLOCK'
+          ? await FirestoreService.getAutolockBuildings()
+          : <String, List<String>>{};
+
       if (mounted) {
         setState(() {
           _territories = prefixes;
           _cardsByTerritory = cardsByTerritory;
+          _autolockBuildings = buildings;
           _selectedTerritory = prefixes.isNotEmpty ? prefixes.first : null;
           _loading = false;
         });
@@ -219,6 +228,7 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
           const SizedBox(height: 16),
           ...visibleTerritories.map((territory) {
             final cards = _cardsByTerritory[territory] ?? [];
+            final buildings = _autolockBuildings[territory] ?? [];
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -230,7 +240,9 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '区域No.$territory (${cards.length}カード)',
+                    widget.type == 'AUTOLOCK'
+                        ? '区域No.$territory (${buildings.length}棟)'
+                        : '区域No.$territory (${cards.length}カード)',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -239,7 +251,43 @@ class _NightTerritoryCardsScreenState extends State<NightTerritoryCardsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...cards.map((cardName) {
+                if (widget.type == 'AUTOLOCK') ...buildings.map((name) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      child: Row(
+                        children: [
+                          Icon(widget.cardIcon, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                if (widget.type != 'AUTOLOCK') ...cards.map((cardName) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: GestureDetector(

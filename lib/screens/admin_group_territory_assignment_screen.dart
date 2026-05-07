@@ -33,6 +33,7 @@ class _AdminGroupTerritoryAssignmentScreenState
   List<String> _groups = [];
   List<String> _allTerritories = [];
   Map<String, String?> _currentAssignments = {}; // territoryNumber -> groupName (画面上の現在の選択状態)
+  Map<String, List<String>> _autolockBuildings = {}; // territoryNumber -> [buildingName, ...]
 
   DateTime? _startDate;
   DateTime? _endDate;
@@ -46,17 +47,19 @@ class _AdminGroupTerritoryAssignmentScreenState
   Future<void> _load() async {
     try {
       final futures = <Future<dynamic>>[
-        FirestoreService.getAllAreaIds(),
+        FirestoreService.getAllAreaIds(type: widget.type == 'NORMAL' ? null : widget.type),
         FirestoreService.getAllLatestAssignments(type: widget.type),
+        if (widget.fixedGroups == null) FirestoreService.getGroupNames(),
+        if (widget.type == 'AUTOLOCK') FirestoreService.getAutolockBuildings(),
       ];
-      // fixedGroups が指定されていない場合のみ GROUP_LIST から取得
-      if (widget.fixedGroups == null) {
-        futures.add(FirestoreService.getGroupNames());
-      }
       final results = await Future.wait(futures);
       final territories = results[0] as List<String>;
       final assignmentsMap = results[1] as Map<String, String>;
       final groups = widget.fixedGroups ?? (results[2] as List<String>);
+      final buildingsIdx = widget.fixedGroups == null ? 3 : 2;
+      final buildings = (widget.type == 'AUTOLOCK' && results.length > buildingsIdx)
+          ? results[buildingsIdx] as Map<String, List<String>>
+          : <String, List<String>>{};
 
       // 最新の日付も取得（任意の一件から）
       String? start;
@@ -79,6 +82,7 @@ class _AdminGroupTerritoryAssignmentScreenState
           _groups = groups;
           _allTerritories = territories;
           _currentAssignments = assignmentsMap;
+          _autolockBuildings = buildings;
           if (start != null) _startDate = _parseDate(start);
           if (end != null) _endDate = _parseDate(end);
           _loading = false;
@@ -294,55 +298,78 @@ class _AdminGroupTerritoryAssignmentScreenState
                   final territory = _allTerritories[index];
                   final assignedGroup = _currentAssignments[territory];
 
+                  final buildings = _autolockBuildings[territory] ?? [];
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 60,
-                          height: 40,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            territory,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        const Icon(Icons.arrow_forward, color: Colors.grey, size: 16),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: (_groups.contains(assignedGroup)) ? assignedGroup : '未割当て',
-                              isExpanded: true,
-                              items: [
-                                const DropdownMenuItem(
-                                  value: '未割当て',
-                                  child: Text('未割当て', style: TextStyle(color: Colors.grey)),
+                        Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                territory,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 16,
                                 ),
-                                ..._groups.map((g) => DropdownMenuItem(
-                                      value: g,
-                                      child: Text(g),
-                                    )),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    _currentAssignments[territory] = val;
-                                  });
-                                }
-                              },
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            const Icon(Icons.arrow_forward, color: Colors.grey, size: 16),
+                            const SizedBox(width: 24),
+                            Expanded(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: (_groups.contains(assignedGroup)) ? assignedGroup : '未割当て',
+                                  isExpanded: true,
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: '未割当て',
+                                      child: Text('未割当て', style: TextStyle(color: Colors.grey)),
+                                    ),
+                                    ..._groups.map((g) => DropdownMenuItem(
+                                          value: g,
+                                          child: Text(g),
+                                        )),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        _currentAssignments[territory] = val;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (buildings.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: buildings.map((name) => Text(
+                                name,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              )).toList(),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   );

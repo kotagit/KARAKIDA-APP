@@ -113,7 +113,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${item.place}  /  $role',
+                        '${item.place.replaceAll('駅', '')}  /  $role',
                         style: const TextStyle(fontSize: 14),
                       ),
                     ],
@@ -430,7 +430,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      item.place,
+                      item.place.replaceAll('駅', ''),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,

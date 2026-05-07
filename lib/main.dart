@@ -56,7 +56,7 @@ class KarakidaApp extends StatelessWidget {
           data: MediaQuery.of(context).copyWith(
             textScaler: const TextScaler.linear(1.2),
           ),
-          child: _ServiceReportBannerWrapper(child: child!),
+          child: child!,
         ),
         home: const AuthGate(),
       ),
@@ -151,7 +151,7 @@ class _AuthGateState extends State<AuthGate> {
     final bool isFullyAuthenticated = auth.isSignedIn && sheets.currentUserName != null;
 
     final next = isFullyAuthenticated
-        ? const HomeScreen(key: ValueKey('home'))
+        ? const _ServiceReportBannerWrapper(key: ValueKey('home'), child: HomeScreen())
         : const LoginScreen(key: ValueKey('login'));
 
     return AnimatedSwitcher(
@@ -166,7 +166,7 @@ class _AuthGateState extends State<AuthGate> {
 /// 毎月1日〜10日の間、画面最上部に奉仕報告の提出案内バナーを表示する。
 class _ServiceReportBannerWrapper extends StatefulWidget {
   final Widget child;
-  const _ServiceReportBannerWrapper({required this.child});
+  const _ServiceReportBannerWrapper({super.key, required this.child});
 
   @override
   State<_ServiceReportBannerWrapper> createState() =>
@@ -184,12 +184,7 @@ class _ServiceReportBannerWrapperState
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
-    final sheets = context.watch<SheetsProvider>();
-    final bool isFullyAuthenticated =
-        auth.isSignedIn && sheets.currentUserName != null;
-
-    if (_dismissed || !isFullyAuthenticated || !_isReportingPeriod()) {
+    if (_dismissed || !_isReportingPeriod()) {
       return widget.child;
     }
 
@@ -220,7 +215,7 @@ class _ServiceReportBannerWrapperState
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      rootNavigatorKey.currentState?.push(
+                      Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ServiceReportScreen(),
                         ),

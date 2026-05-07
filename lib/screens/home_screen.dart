@@ -16,6 +16,7 @@ class MenuItem {
   final Widget? destination;
   final Color? color;
   final IconData? iconData;
+  final Future<void> Function(BuildContext)? onTapOverride;
 
   const MenuItem({
     required this.label,
@@ -23,6 +24,7 @@ class MenuItem {
     this.destination,
     this.color,
     this.iconData,
+    this.onTapOverride,
   });
 }
 
@@ -46,11 +48,37 @@ class HomeScreen extends StatelessWidget {
           iconAsset: 'assets/申込み.png',
           destination: ApplicationMenuScreen(),
         ),
-        const MenuItem(
+        MenuItem(
           label: '支援',
           iconAsset: '',
           iconData: Icons.handshake_outlined,
-          destination: SupportScreen(),
+          destination: const SupportScreen(),
+          onTapOverride: (context) async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                content: const Text(
+                  'この機能は他の人を援助する際にだけご利用下さい。\n\nそれ以外の場合はご自身のグループに割り当てられた通常区域またはオートロック区域の区域カードをご使用ください。',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('戻る'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('理解しました'),
+                  ),
+                ],
+              ),
+            );
+            if (ok == true && context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SupportScreen()),
+              );
+            }
+          },
         ),
         const MenuItem(
           label: '設定',
@@ -221,17 +249,21 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildMenuCard(BuildContext context, MenuItem item) {
-    final bool isEnabled = item.destination != null;
+    final bool isEnabled = item.destination != null || item.onTapOverride != null;
     final cs = Theme.of(context).colorScheme;
     final Color activeColor = isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400;
 
     return GestureDetector(
       onTap: isEnabled
           ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => item.destination!),
-              );
+              if (item.onTapOverride != null) {
+                item.onTapOverride!(context);
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => item.destination!),
+                );
+              }
             }
           : null,
       child: Container(

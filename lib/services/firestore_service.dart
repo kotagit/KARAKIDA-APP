@@ -183,13 +183,42 @@ class FirestoreService {
   // アプリでは最新timestampの1件だけを使用
   // ──────────────────────────────────────────────
 
-  /// AREA_LIST から全ての区域番号 (areaId) の一覧を取得
-  static Future<List<String>> getAllAreaIds() async {
+  /// AUTOLOCK_LIST から全マンション名を取得し、区域番号(areano)でグループ化して返す
+  static Future<Map<String, List<String>>> getAutolockBuildings() async {
     try {
       final snap = await _db
-          .collection('AREA_LIST')
+          .collection('AUTOLOCK_LIST')
           .get(const GetOptions(source: Source.server));
-      
+      final result = <String, List<String>>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final areano = data['areano'];
+        final name = data['name']?.toString() ?? '';
+        if (name.isEmpty) continue;
+        final key = areano is int
+            ? areano.toString()
+            : areano is num
+                ? areano.toInt().toString()
+                : areano?.toString() ?? '';
+        if (key.isEmpty) continue;
+        result.putIfAbsent(key, () => []).add(name);
+      }
+      return result;
+    } catch (e) {
+      debugPrint('getAutolockBuildings error: $e');
+      return {};
+    }
+  }
+
+  /// AREA_LIST から全ての区域番号 (areaId) の一覧を取得
+  /// [type] を指定した場合は AREA_LIST の type フィールドでフィルタする
+  static Future<List<String>> getAllAreaIds({String? type}) async {
+    try {
+      final Query<Map<String, dynamic>> query = type != null
+          ? _db.collection('AREA_LIST').where('type', isEqualTo: type)
+          : _db.collection('AREA_LIST');
+      final snap = await query.get(const GetOptions(source: Source.server));
+
       final ids = <int>{};
       for (final doc in snap.docs) {
         final data = doc.data();
@@ -211,14 +240,14 @@ class FirestoreService {
 
       if (ids.isEmpty) {
         debugPrint('getAllAreaIds: AREA_LIST is empty, falling back to AREA_DATA_NORMAL');
-        return _getAllAreaIdsFromDataNormal();
+        return type == null ? _getAllAreaIdsFromDataNormal() : [];
       }
 
       final sorted = ids.toList()..sort();
       return sorted.map((e) => e.toString()).toList();
     } catch (e) {
       debugPrint('getAllAreaIds error: $e');
-      return _getAllAreaIdsFromDataNormal();
+      return type == null ? _getAllAreaIdsFromDataNormal() : [];
     }
   }
 
@@ -668,7 +697,7 @@ class FirestoreService {
     final snap = await _db
         .collection('CARD_ASSIGNMENTS')
         .where('memberName', isEqualTo: userName.trim())
-        .get();
+        .get(const GetOptions(source: Source.server));
 
     if (snap.docs.isEmpty) return [];
 
