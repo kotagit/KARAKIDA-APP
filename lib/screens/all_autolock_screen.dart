@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/sheets_provider.dart';
 import '../services/firestore_service.dart';
 import 'sheet_view_screen.dart';
@@ -13,11 +14,16 @@ class AllAutolockScreen extends StatefulWidget {
 
 class _AllAutolockScreenState extends State<AllAutolockScreen> {
   bool _loading = true;
+  bool _refreshing = false;
   String? _error;
+  DateTime? _lastUpdated;
 
   // グループ名 → [ { areaNo, buildings: [{name, buildno}] } ]
   Map<String, List<Map<String, dynamic>>> _groupData = {};
   List<String> _groupOrder = [];
+
+  // cardName → 直近10分以内の訪問者あり
+  Set<String> _recentVisitCards = {};
 
   @override
   void initState() {
@@ -25,15 +31,30 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool isRefresh = false}) async {
+    if (isRefresh) {
+      setState(() => _refreshing = true);
+    }
     try {
-      // 1. 全グループのAUTOLOCK割当: territory → groupName
       final assignments = await FirestoreService.getAllLatestAssignments(type: 'AUTOLOCK');
-
-      // 2. AUTOLOCK_LIST から区域番号 → 物件一覧
       final buildings = await FirestoreService.getAutolockBuildingsDetailed();
 
-      // 3. グループ → [{areaNo, buildings}] に整理
+      // 直近10分の訪問記録を一括取得
+      final since = Timestamp.fromDate(DateTime.now().subtract(const Duration(minutes: 10)));
+      final histSnap = await FirebaseFirestore.instance
+          .collection('AREA_DATA_AUTOLOCK_HISTORY')
+          .where('timestamp', isGreaterThan: since)
+          .get();
+      final recentCards = <String>{};
+      for (final doc in histSnap.docs) {
+        final data = doc.data();
+        final areaId = data['areaId']?.toString() ?? '';
+        final buildNum = data['buildNum']?.toString() ?? '';
+        if (areaId.isNotEmpty && buildNum.isNotEmpty) {
+          recentCards.add('$areaId-$buildNum');
+        }
+      }
+
       final grouped = <String, Map<String, List<Map<String, dynamic>>>>{};
       for (final entry in assignments.entries) {
         final territory = entry.key;
@@ -62,7 +83,11 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
         setState(() {
           _groupData = result;
           _groupOrder = sortedGroups;
+          _recentVisitCards = recentCards;
+          _lastUpdated = DateTime.now();
           _loading = false;
+          _refreshing = false;
+          _error = null;
         });
       }
     } catch (e) {
@@ -70,9 +95,16 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
         setState(() {
           _error = '読み込みに失敗しました: $e';
           _loading = false;
+          _refreshing = false;
         });
       }
     }
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m更新';
   }
 
   @override
@@ -87,6 +119,30 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
           color: Colors.white,
         ),
         actions: [
+          if (_lastUpdated != null && !_loading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  _formatTime(_lastUpdated!),
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+              ),
+            ),
+          if (!_loading)
+            IconButton(
+              icon: _refreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.refresh, color: Colors.white),
+              onPressed: _refreshing ? null : () => _load(isRefresh: true),
+            ),
           if (sheets.currentUserName != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -155,6 +211,7 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
                   final name = b['name'] as String? ?? '';
                   final buildno = b['buildno'] as String? ?? '';
                   final cardName = '$areaNo-$buildno';
+                  final hasRecentVisit = _recentVisitCards.contains(cardName);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: GestureDetector(
@@ -176,7 +233,12 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: hasRecentVisit
+                                ? Colors.orange
+                                : Colors.grey.shade300,
+                            width: hasRecentVisit ? 1.5 : 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.04),
@@ -186,24 +248,47 @@ class _AllAutolockScreenState extends State<AllAutolockScreen> {
                           ],
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                        child: Row(
+                            horizontal: 12, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.lock_outlined,
-                                color: Theme.of(context).colorScheme.primary),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
+                            Row(
+                              children: [
+                                Icon(Icons.lock_outlined,
+                                    color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Icon(Icons.chevron_right,
+                                    color: Colors.grey.shade400),
+                              ],
                             ),
-                            Icon(Icons.chevron_right,
-                                color: Colors.grey.shade400),
+                            if (hasRecentVisit) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded,
+                                      color: Colors.orange, size: 14),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    '10分以内に訪問者あり',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
