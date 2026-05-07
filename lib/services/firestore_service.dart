@@ -357,6 +357,7 @@ class FirestoreService {
 
       results.add({
         'id': docId,
+        'uid': uid,
         'addressNumber': roomNum,
         'townName': _floorTag(roomNumRaw),
         'targetName': houseName,
@@ -1985,6 +1986,36 @@ class FirestoreService {
 
     debugPrint(
         'updateNightVisitStatus: $cardName uid=$addressId status=$statusResult');
+  }
+
+  /// オートロックカードの訪問ステータスを更新（AREA_DATA_AUTOLOCK_HISTORY に書き込み）
+  static Future<void> updateAutolockVisitStatus({
+    required String cardName,
+    required String addressId, // = uid
+    required String startDate,
+    required String endDate,
+    required String staffName,
+    required String statusResult,
+  }) async {
+    final parsed = _parseCardName(cardName);
+    if (parsed == null) return;
+
+    final safeDateStr = (String s) => s.replaceAll('/', '');
+    final docId = '${addressId}_${safeDateStr(startDate)}_${safeDateStr(endDate)}';
+
+    await _db.collection('AREA_DATA_AUTOLOCK_HISTORY').doc(docId).set({
+      'uid': addressId,
+      'type': 'AUTOLOCK',
+      'areaId': parsed.areaId,
+      'buildNum': parsed.sheetId,
+      'startDate': startDate,
+      'endDate': endDate,
+      'staffName': staffName,
+      'visitResult': statusResult,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    debugPrint('updateAutolockVisitStatus: $cardName uid=$addressId status=$statusResult');
   }
 
   /// 夜間カードの変更をリアルタイムで監視

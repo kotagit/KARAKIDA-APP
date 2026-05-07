@@ -492,6 +492,61 @@ class SheetsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// オートロックカードのステータスを更新（AREA_DATA_AUTOLOCK_HISTORY に書き込み）
+  Future<void> updateAutolockVisitStatus(String uid, String statusResult) async {
+    debugPrint('updateAutolockVisitStatus: card=$_selectedCardName, uid=$uid, status=$statusResult, start=$_visitStartDate, end=$_visitEndDate');
+    if (_selectedCardName == null) {
+      _error = '保存できません: カードが選択されていません';
+      notifyListeners();
+      return;
+    }
+
+    final now = DateTime.now();
+    final todayStr = '${now.year}/${now.month}/${now.day}';
+    final effectiveStart = _visitStartDate ?? todayStr;
+    final effectiveEnd = _visitEndDate ?? todayStr;
+
+    try {
+      await FirestoreService.updateAutolockVisitStatus(
+        cardName: _selectedCardName!,
+        addressId: uid,
+        startDate: effectiveStart,
+        endDate: effectiveEnd,
+        staffName: _currentUserName ?? '',
+        statusResult: statusResult,
+      );
+
+      // ローカルデータも更新（uid フィールドで該当行を検索）
+      final idx = _cardAddresses.indexWhere((a) => a['uid'] == uid);
+      if (idx >= 0) {
+        final visitId = '${effectiveStart}_$effectiveEnd';
+        final visits = List<Map<String, dynamic>>.from(_cardAddresses[idx]['visits'] ?? []);
+        final existingIdx = visits.indexWhere((v) => v['id'] == visitId);
+        final visitData = {
+          'id': visitId,
+          'staffName': _currentUserName ?? '',
+          'startDate': effectiveStart,
+          'endDate': effectiveEnd,
+          'statusResult': statusResult,
+        };
+        if (existingIdx >= 0) {
+          visits[existingIdx] = visitData;
+        } else {
+          visits.insert(0, visitData);
+        }
+        _cardAddresses[idx] = {
+          ..._cardAddresses[idx],
+          'visits': visits,
+          'currentVisit': visitData,
+        };
+      }
+      notifyListeners();
+    } catch (e) {
+      _error = 'ステータスの更新に失敗しました: $e';
+      notifyListeners();
+    }
+  }
+
   /// 夜間カードのステータスを更新（AREA_DATA_NIGHT_HISTORY に書き込み）
   Future<void> updateNightVisitStatus(String addressId, String statusResult) async {
     debugPrint('updateNightVisitStatus: card=$_selectedCardName, addr=$addressId, status=$statusResult, start=$_nightStartDate, end=$_nightEndDate');

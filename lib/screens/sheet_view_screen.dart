@@ -629,6 +629,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     String currentValue,
   ) {
     final addressId = addr['id'] as String;
+    final uid = addr['uid'] as String? ?? addressId;
     String? selected = currentValue.isEmpty ? null : currentValue;
 
     showDialog(
@@ -668,7 +669,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
             ElevatedButton(
               onPressed: () {
                 final value = selected ?? '';
-                if (widget.isNight) {
+                if (widget.isAutolock) {
+                  sheets.updateAutolockVisitStatus(uid, value);
+                } else if (widget.isNight) {
                   sheets.updateNightVisitStatus(addressId, value);
                 } else {
                   sheets.updateVisitStatus(addressId, value);
@@ -708,6 +711,7 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     TextEditingController controller,
     String value, {
     String? hex,
+    String? uid,
   }) {
     Color bgColor = Colors.grey.shade200;
     if (hex != null && hex.isNotEmpty) {
@@ -716,7 +720,9 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(backgroundColor: bgColor),
       onPressed: () {
-        if (widget.isNight) {
+        if (widget.isAutolock) {
+          sheets.updateAutolockVisitStatus(uid ?? addressId, value);
+        } else if (widget.isNight) {
           sheets.updateNightVisitStatus(addressId, value);
         } else {
           sheets.updateVisitStatus(addressId, value);
