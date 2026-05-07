@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/sheets_provider.dart';
 import 'all_territories_screen.dart';
 import 'service_report_screen.dart';
+import 'all_autolock_screen.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -40,11 +41,23 @@ class SupportScreen extends StatelessWidget {
           children: [
             _buildMenuButton(
               context,
-              label: '全ての区域カード',
+              label: '通常区域',
               icon: Icons.map_outlined,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AllTerritoriesScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildMenuButton(
+              context,
+              label: 'オートロック区域',
+              icon: Icons.lock_outlined,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AllAutolockScreen(),
+                ),
               ),
             ),
             const SizedBox(height: 12),

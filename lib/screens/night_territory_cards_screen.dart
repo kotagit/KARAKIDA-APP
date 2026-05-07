@@ -12,12 +12,14 @@ class NightTerritoryCardsScreen extends StatefulWidget {
   final String type;
   final String title;
   final IconData cardIcon;
+  final bool showAllGroups;
 
   const NightTerritoryCardsScreen({
     super.key,
     this.type = 'NIGHT',
     this.title = '夜間区域',
     this.cardIcon = Icons.nightlight_round,
+    this.showAllGroups = false,
   });
 
   @override

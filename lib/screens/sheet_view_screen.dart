@@ -52,13 +52,13 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
 
   Future<void> _checkRecentAutolockEditors() async {
     final sheets = context.read<SheetsProvider>();
-    // カードデータ読み込み完了を待つ
-    if (sheets.isLoading) {
-      await Future.doWhile(() async {
-        await Future.delayed(const Duration(milliseconds: 200));
-        return mounted && context.read<SheetsProvider>().isLoading;
-      });
-    }
+    // カードデータ＋編集者チェック完了を待つ
+    await Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (!mounted) return false;
+      final p = context.read<SheetsProvider>();
+      return p.isLoading || p.isCheckingEditors;
+    });
     if (!mounted) return;
 
     final editors = context.read<SheetsProvider>().recentAutolockEditors;
@@ -87,12 +87,19 @@ class _SheetViewScreenState extends State<SheetViewScreen> {
           '直近10分以内に別の方がこの物件を訪問しました。',
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text('戻る'),
+          ),
           ElevatedButton(
             onPressed: () {
               context.read<SheetsProvider>().clearRecentAutolockEditors();
               Navigator.pop(ctx);
             },
-            child: const Text('確認しました'),
+            child: const Text('理解しました'),
           ),
         ],
       ),

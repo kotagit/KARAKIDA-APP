@@ -21,6 +21,16 @@ class SheetsProvider extends ChangeNotifier {
   bool _isAutolockCard = false;
   bool get isAutolockCard => _isAutolockCard;
 
+  // オートロックカードを開いた時の直近編集者警告
+  List<Map<String, dynamic>> _recentAutolockEditors = [];
+  List<Map<String, dynamic>> get recentAutolockEditors => _recentAutolockEditors;
+  bool _isCheckingEditors = false;
+  bool get isCheckingEditors => _isCheckingEditors;
+  void clearRecentAutolockEditors() {
+    _recentAutolockEditors = [];
+    notifyListeners();
+  }
+
   // Access control
   String? _currentUserName;
   String? _currentUserGroupName;
@@ -459,6 +469,20 @@ class SheetsProvider extends ChangeNotifier {
       _error = 'カードデータの取得に失敗しました: $e';
     }
     _isLoading = false;
+    notifyListeners();
+
+    // 編集者チェック（失敗してもカード表示に影響しない）
+    _isCheckingEditors = true;
+    try {
+      _recentAutolockEditors = await FirestoreService.getRecentAutolockEditors(
+        cardName,
+        excludeStaff: _currentUserName,
+      );
+    } catch (e) {
+      debugPrint('getRecentAutolockEditors error (non-fatal): $e');
+      _recentAutolockEditors = [];
+    }
+    _isCheckingEditors = false;
     notifyListeners();
   }
 
