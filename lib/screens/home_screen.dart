@@ -187,7 +187,7 @@ class HomeScreen extends StatelessWidget {
                 onTap: () async {
                   final uri = Uri.parse('https://karakida-app-7bbc0.web.app');
                   if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
                 },
                 child: const Row(
