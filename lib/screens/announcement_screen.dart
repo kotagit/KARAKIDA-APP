@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/api_service.dart';
 
 class AnnouncementScreen extends StatefulWidget {
   const AnnouncementScreen({super.key});
@@ -11,9 +11,6 @@ class AnnouncementScreen extends StatefulWidget {
 
 class _AnnouncementScreenState extends State<AnnouncementScreen>
     with SingleTickerProviderStateMixin {
-  static const String _spreadsheetId =
-      '14FhgXBNYQhJxnV9xTp4J5wEuh2jUkgjpAVvVD2jXAyc';
-
   late TabController _tabController;
   List<Map<String, dynamic>> _currentData = [];
   List<Map<String, dynamic>> _oldData = [];
@@ -40,109 +37,53 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
     });
 
     try {
-      final results = await Future.wait([
-        ApiService.readRange('data', spreadsheetId: _spreadsheetId),
-        ApiService.readRange('data_OLD', spreadsheetId: _spreadsheetId),
-      ]);
+      final snap = await FirebaseFirestore.instance
+          .collection('ANNOUNCEMENT')
+          .orderBy('date', descending: true)
+          .limit(100)
+          .get();
 
-      if (!mounted) return;
-      
-      // data と data_OLD の全データを取得し、ヘッダーを除外して結合
-      final allRawRows = [
-        ...results[0].length > 1 ? results[0].sublist(1) : [],
-        ...results[1].length > 1 ? results[1].sublist(1) : [],
-      ];
-
-      // --- 1. まず全データをグループ化する（空欄行を親行に合体させる） ---
-      final List<Map<String, dynamic>> allAnnouncements = [];
-      String lastDateStr = '';
-      String lastTitle = '';
-      String lastBody = '';
-
-      for (final row in allRawRows) {
-        final dateStr = row.isNotEmpty ? row[0].toString().trim() : '';
-        final title = row.length > 1 ? row[1].toString().trim() : '';
-        final body = row.length > 2 ? row[2].toString().trim() : '';
-
-        // リンク (docname, url) を抽出
-        final List<Map<String, String>> rowLinks = [];
-        for (int i = 3; i < row.length; i += 2) {
-          final String docName = row[i].toString().trim();
-          final String url = (i + 1 < row.length) ? row[i + 1].toString().trim() : '';
-          if (url.isNotEmpty) {
-            rowLinks.add({'url': url, 'label': docName.isNotEmpty ? docName : '資料を開く'});
-          }
-        }
-
-        final bool isContinuation = dateStr.isEmpty && title.isEmpty && body.isEmpty;
-
-        if (isContinuation && allAnnouncements.isNotEmpty) {
-          // 継続行であれば、直前の発表内容にリンクを追加
-          (allAnnouncements.last['links'] as List<Map<String, String>>).addAll(rowLinks);
-        } else {
-          // 新しい発表内容として追加
-          if (dateStr.isNotEmpty) lastDateStr = dateStr;
-          if (title.isNotEmpty) lastTitle = title;
-          if (body.isNotEmpty) lastBody = body;
-          
-          allAnnouncements.add({
-            'date': lastDateStr,
-            'title': lastTitle,
-            'body': lastBody,
-            'links': List<Map<String, String>>.from(rowLinks),
-          });
-        }
-      }
-
-      // --- 2. 日付を判定して「今週」と「過去」に振り分け、それぞれソートする ---
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final sevenDaysAgo = today.subtract(const Duration(days: 7));
+      final sevenDaysAgo = DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(days: 7));
 
       final List<Map<String, dynamic>> current = [];
       final List<Map<String, dynamic>> past = [];
 
-      for (final item in allAnnouncements) {
-        final dateStr = item['date'] as String;
-        DateTime? rowDate;
-        
-        final parts = dateStr.split('/');
-        if (parts.length == 3) {
-          rowDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        } else {
-          rowDate = DateTime.tryParse(dateStr);
+      for (final doc in snap.docs) {
+        final d = doc.data();
+        final ts = d['date'];
+        final DateTime date = ts is Timestamp
+            ? ts.toDate()
+            : DateTime.tryParse(ts.toString()) ?? DateTime(2000);
+
+        final List<Map<String, String>> links = [];
+        if (d['links'] is List) {
+          for (final l in d['links'] as List) {
+            if (l is Map && l['url'] != null && (l['url'] as String).isNotEmpty) {
+              links.add({
+                'url': l['url'].toString(),
+                'label': (l['title'] ?? '資料を開く').toString(),
+              });
+            }
+          }
         }
 
-        final bool isRecent = rowDate != null && 
-            (rowDate.isAfter(sevenDaysAgo) || rowDate.isAtSameMomentAs(sevenDaysAgo));
+        final item = {
+          'date': date,
+          'title': (d['title'] ?? '').toString(),
+          'body': (d['body'] ?? '').toString(),
+          'links': links,
+        };
 
-        if (isRecent) {
+        if (date.isAfter(sevenDaysAgo) || date.isAtSameMomentAs(sevenDaysAgo)) {
           current.add(item);
         } else {
           past.add(item);
         }
       }
 
-      // 日付の新しい順（降順）にソート
-      int compareItems(Map<String, dynamic> a, Map<String, dynamic> b) {
-        final dateStrA = a['date'] as String;
-        final dateStrB = b['date'] as String;
-        DateTime? dateA;
-        final pA = dateStrA.split('/');
-        dateA = pA.length == 3 ? DateTime(int.parse(pA[0]), int.parse(pA[1]), int.parse(pA[2])) : DateTime.tryParse(dateStrA);
-        DateTime? dateB;
-        final pB = dateStrB.split('/');
-        dateB = pB.length == 3 ? DateTime(int.parse(pB[0]), int.parse(pB[1]), int.parse(pB[2])) : DateTime.tryParse(dateStrB);
-
-        if (dateA == null && dateB == null) return 0;
-        if (dateA == null) return 1;
-        if (dateB == null) return -1;
-        return dateB.compareTo(dateA);
-      }
-
-      current.sort(compareItems);
-      past.sort(compareItems);
-
+      if (!mounted) return;
       setState(() {
         _currentData = current;
         _oldData = past;
@@ -167,9 +108,10 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
         bottom: TabBar(
           controller: _tabController,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
+          unselectedLabelStyle:
+              const TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
           indicatorColor: Theme.of(context).colorScheme.secondary,
           indicatorWeight: 4,
           indicatorSize: TabBarIndicatorSize.label,
@@ -193,8 +135,8 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
     );
   }
 
-  Widget _buildList(List<Map<String, dynamic>> groupedData) {
-    if (groupedData.isEmpty) {
+  Widget _buildList(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) {
       return const Center(child: Text('データがありません'));
     }
 
@@ -202,13 +144,16 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
       onRefresh: _loadData,
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
-        itemCount: groupedData.length,
+        itemCount: data.length,
         itemBuilder: (context, index) {
-          final item = groupedData[index];
-          final String date = _formatDate(item['date'].toString());
-          final String title = item['title'].toString();
-          final String body = item['body'].toString();
-          final List<Map<String, String>> links = List<Map<String, String>>.from(item['links']);
+          final item = data[index];
+          final DateTime date = item['date'] as DateTime;
+          final String dateStr =
+              '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+          final String title = item['title'] as String;
+          final String body = item['body'] as String;
+          final List<Map<String, String>> links =
+              List<Map<String, String>>.from(item['links']);
 
           return Card(
             margin: const EdgeInsets.only(bottom: 16),
@@ -221,7 +166,8 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
             child: Container(
               decoration: BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 6),
+                  left: BorderSide(
+                      color: Theme.of(context).colorScheme.primary, width: 6),
                 ),
               ),
               child: Padding(
@@ -229,20 +175,25 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 日付バッジ風表示
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.calendar_today_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                          Icon(Icons.calendar_today_rounded,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 6),
                           Text(
-                            date,
+                            dateStr,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -253,16 +204,16 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // 主題
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF1E293B),
-                        height: 1.2,
+                    if (title.isNotEmpty)
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1E293B),
+                          height: 1.2,
+                        ),
                       ),
-                    ),
                     if (body.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Text(
@@ -276,27 +227,32 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                     ],
                     if (links.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      // リンクをポップなボタンとして表示
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: links.map((link) => ElevatedButton.icon(
-                              icon: const Icon(Icons.description_rounded, size: 18),
-                              label: Text(
-                                link['label']!,
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
-                                foregroundColor: const Color(0xFF1E293B),
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () => _openUrl(link['url']!),
-                            )).toList(),
+                        children: links
+                            .map((link) => ElevatedButton.icon(
+                                  icon: const Icon(Icons.description_rounded,
+                                      size: 18),
+                                  label: Text(
+                                    link['label']!,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.secondary,
+                                    foregroundColor: const Color(0xFF1E293B),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () => _openUrl(link['url']!),
+                                ))
+                            .toList(),
                       ),
                     ],
                   ],
@@ -307,18 +263,6 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
         },
       ),
     );
-  }
-
-  String _formatDate(String raw) {
-    // "2026-03-30T15:00:00.000Z" → "2026/03/30"
-    final dt = DateTime.tryParse(raw);
-    if (dt != null) {
-      return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-    }
-    // ISO形式でなければTより前を返す
-    final tIndex = raw.indexOf('T');
-    if (tIndex > 0) return raw.substring(0, tIndex);
-    return raw;
   }
 
   Future<void> _openUrl(String url) async {
