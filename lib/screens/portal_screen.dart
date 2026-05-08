@@ -33,21 +33,41 @@ class _PortalScreenState extends State<PortalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '唐木田APPに戻る',
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('唐木田PORTAL'),
-      ),
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),
           if (_isLoading)
             const Center(child: CircularProgressIndicator()),
         ],
+      ),
+      bottomNavigationBar: Container(
+        color: cs.primary,
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: MediaQuery.of(context).padding.bottom + 12,
+        ),
+        child: InkWell(
+          onTap: () => Navigator.pop(context),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text(
+                '唐木田APPに戻る',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
