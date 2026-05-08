@@ -112,7 +112,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text('唐木田APP', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: const Text('唐木田APP v2.0', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         actions: [
           if (sheets.currentUserName != null)
             Padding(
