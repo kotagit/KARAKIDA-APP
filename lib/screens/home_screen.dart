@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'portal_screen.dart';
 import '../services/auth_service.dart';
 import '../providers/sheets_provider.dart';
 import 'senkyo_menu_screen.dart';
@@ -9,6 +10,7 @@ import 'announcement_screen.dart';
 import 'admin_screen.dart';
 import 'color_settings_screen.dart';
 import 'support_screen.dart';
+import '../providers/theme_provider.dart';
 
 class MenuItem {
   final String label;
@@ -102,7 +104,13 @@ class HomeScreen extends StatelessWidget {
         leadingWidth: 44,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
-          child: Image.asset('assets/APP_LOGO_TOP.png'),
+          child: SvgPicture.asset(
+            'assets/APP_LOGO.svg',
+            colorFilter: ColorFilter.mode(
+              context.watch<ThemeProvider>().logoColorOnDark,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
         title: const Text('唐木田APP', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         actions: [
@@ -176,7 +184,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () => _openPortal(auth.currentUser?.email),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PortalScreen())),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -230,23 +238,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openPortal(String? email) async {
-    String urlString = 'https://sites.google.com/view/karakida/';
-
-    // メールアドレスがある場合は、Google の Account Chooser を経由して
-    // ログイン状態を維持しつつ遷移を試みる
-    if (email != null && email.isNotEmpty) {
-      final encodedEmail = Uri.encodeComponent(email);
-      final encodedContinue = Uri.encodeComponent(urlString);
-      urlString =
-          'https://accounts.google.com/AccountChooser?Email=$encodedEmail&continue=$encodedContinue';
-    }
-
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
 
   Widget _buildMenuCard(BuildContext context, MenuItem item) {
     final bool isEnabled = item.destination != null || item.onTapOverride != null;
