@@ -184,7 +184,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PortalScreen())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PortalScreen(email: auth.currentUser?.email))),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

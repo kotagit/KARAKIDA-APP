@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PortalScreen extends StatefulWidget {
-  const PortalScreen({super.key});
+  final String? email;
+  const PortalScreen({super.key, this.email});
 
   @override
   State<PortalScreen> createState() => _PortalScreenState();
@@ -15,6 +16,9 @@ class _PortalScreenState extends State<PortalScreen> {
   @override
   void initState() {
     super.initState();
+    final uri = Uri.parse('https://karakida-app-7bbc0.web.app').replace(
+      queryParameters: widget.email != null ? {'appUser': widget.email!} : null,
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setUserAgent('KarakidaApp')
@@ -24,7 +28,7 @@ class _PortalScreenState extends State<PortalScreen> {
           onPageFinished: (_) => setState(() => _isLoading = false),
         ),
       )
-      ..loadRequest(Uri.parse('https://karakida-app-7bbc0.web.app'));
+      ..loadRequest(uri);
   }
 
   @override
