@@ -35,6 +35,11 @@ class _PortalScreenState extends State<PortalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '唐木田APPに戻る',
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('唐木田PORTAL'),
       ),
       body: Stack(
