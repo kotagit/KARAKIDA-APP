@@ -45,7 +45,6 @@ dependencies:
   url_launcher: ^6.3.0
   flutter_colorpicker: ^1.1.0
   flutter_svg: ^2.0.10+1
-  webview_flutter: ^4.0.0
 
 dev_dependencies:
   flutter_test:

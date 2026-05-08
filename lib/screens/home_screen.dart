@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'portal_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../providers/sheets_provider.dart';
 import 'senkyo_menu_screen.dart';
@@ -184,7 +184,12 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PortalScreen(email: auth.currentUser?.email))),
+                onTap: () async {
+                  final uri = Uri.parse('https://karakida-app-7bbc0.web.app');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                  }
+                },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
