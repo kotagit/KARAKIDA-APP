@@ -231,7 +231,7 @@ class HomeScreen extends StatelessWidget {
         }
 
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: tiles,
         );
