@@ -76,12 +76,6 @@ class HomeScreen extends StatelessWidget {
             }
           },
         ),
-        const MenuItem(
-          label: '設定',
-          iconAsset: '',
-          iconData: Icons.palette_outlined,
-          destination: ColorSettingsScreen(),
-        ),
         MenuItem(
           label: '唐木田PORTAL',
           iconAsset: '',
@@ -92,6 +86,12 @@ class HomeScreen extends StatelessWidget {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             }
           },
+        ),
+        const MenuItem(
+          label: '設定',
+          iconAsset: '',
+          iconData: Icons.palette_outlined,
+          destination: ColorSettingsScreen(),
         ),
       ];
 
@@ -154,28 +154,23 @@ class HomeScreen extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final uri = Uri.parse('https://karakida-app-7bbc0.web.app');
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.language, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '唐木田PORTAL',
-                      style: TextStyle(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.person, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      sheets.currentUserName ?? '',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             Container(
