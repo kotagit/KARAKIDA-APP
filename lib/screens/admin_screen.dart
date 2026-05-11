@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
 import '../providers/sheets_provider.dart';
-import 'admin_group_territory_assignment_screen.dart';
 import 'admin_overall_assignment_screen.dart';
-import 'admin_public_witnessing_screen.dart';
-import 'application_screen.dart';
-import 'admin_territory_table_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -65,75 +60,6 @@ class AdminScreen extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-              const SizedBox(height: 24),
-            ],
-            if (sheets.isPW) ...[
-              _buildSectionTag(context, '取決め策定者'),
-              const SizedBox(height: 8),
-              _buildMenuButton(
-                context,
-                label: '公共エリア',
-                icon: Icons.location_city,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminPublicWitnessingScreen()),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-            if (sheets.isTerritoryServant) ...[
-              _buildSectionTag(context, '区域係'),
-              const SizedBox(height: 8),
-              _buildMenuButton(
-                context,
-                label: 'グループ区域割当て',
-                icon: Icons.assignment_outlined,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminGroupTerritoryAssignmentScreen()),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuButton(
-                context,
-                label: '夜間区域割当て',
-                icon: Icons.nightlight_round,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminGroupTerritoryAssignmentScreen(
-                      title: '夜間区域割当て',
-                      type: 'NIGHT',
-                      fixedGroups: ['会衆'],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuButton(
-                context,
-                label: 'AL区域割当て',
-                icon: Icons.lock_outline,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminGroupTerritoryAssignmentScreen(
-                      title: 'AL区域割当て',
-                      type: 'AUTOLOCK',
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuButton(
-                context,
-                label: 'S-13',
-                icon: Icons.table_rows_outlined,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminTerritoryTableScreen()),
-                ),
               ),
             ],
           ],
