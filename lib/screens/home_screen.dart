@@ -131,12 +131,15 @@ class HomeScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: _buildHomeListMenu(context, menuItems, sheets.isAdmin),
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: _buildHomeListMenu(context, menuItems, sheets.isAdmin),
+            ),
           ),
         ),
       ),
@@ -214,27 +217,28 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildHomeListMenu(BuildContext context, List<MenuItem> items, bool isAdmin) {
     final cs = Theme.of(context).colorScheme;
-    final tiles = <Widget>[];
-    for (var i = 0; i < items.length; i++) {
-      tiles.add(_buildTile(context, items[i]));
-      tiles.add(const SizedBox(height: 12));
-    }
-    if (isAdmin) {
-      tiles.add(_buildTile(
-        context,
+    final allItems = <MenuItem>[
+      ...items,
+      if (isAdmin)
         MenuItem(
           label: '管理画面',
           iconAsset: 'assets/奉仕監督.png',
           destination: const AdminScreen(),
           color: cs.secondary,
         ),
-        isAdminRow: true,
-      ));
-    } else if (tiles.isNotEmpty) {
-      tiles.removeLast(); // 末尾の余白を削除
+    ];
+
+    final tiles = <Widget>[];
+    for (var i = 0; i < allItems.length; i++) {
+      if (i > 0) tiles.add(const SizedBox(height: 10));
+      final isAdminTile = isAdmin && i == allItems.length - 1;
+      tiles.add(Expanded(child: _buildTile(context, allItems[i], isAdminRow: isAdminTile)));
     }
 
-    return Column(children: tiles);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: tiles,
+    );
   }
 
   Widget _buildTile(
@@ -348,7 +352,7 @@ class _PressableTileState extends State<_PressableTile> {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: widget.child,
         ),
       ),
