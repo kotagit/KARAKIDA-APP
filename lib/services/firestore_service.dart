@@ -2210,6 +2210,33 @@ class FirestoreService {
 
   /// 選択可能な募集項目を PUBLIC_WITNESSING_OPTIONS から取得
   /// 各ドキュメントのフィールド: day, dayofweek, starttime, endtime, place, (order?)
+  static Future<List<Map<String, dynamic>>> getFieldServiceForWeek(DateTime weekStart) async {
+    try {
+      String fmt(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      final startStr = fmt(weekStart);
+      final endStr = fmt(weekStart.add(const Duration(days: 6)));
+      final snap = await _db
+          .collection('FIELD_SERVICE')
+          .where('date', isGreaterThanOrEqualTo: startStr)
+          .where('date', isLessThanOrEqualTo: endStr)
+          .get(const GetOptions(source: Source.server));
+      final rows = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+      rows.sort((a, b) {
+        final da = (a['date'] ?? '').toString();
+        final db = (b['date'] ?? '').toString();
+        if (da != db) return da.compareTo(db);
+        final sa = (a['sortOrder'] as num?)?.toInt() ?? 0;
+        final sb = (b['sortOrder'] as num?)?.toInt() ?? 0;
+        return sa.compareTo(sb);
+      });
+      return rows;
+    } catch (e) {
+      debugPrint('getFieldServiceForWeek error: $e');
+      return [];
+    }
+  }
+
   static Future<List<Map<String, dynamic>>> getPublicWitnessingOptions() async {
     try {
       final snap = await _db

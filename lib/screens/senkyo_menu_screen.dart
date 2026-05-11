@@ -6,6 +6,7 @@ import 'file_list_screen.dart';
 import 'night_territory_cards_screen.dart';
 import 'all_territories_screen.dart';
 import 'public_witnessing_table_screen.dart';
+import 'field_service_table_screen.dart';
 
 class SenkyoMenuScreen extends StatelessWidget {
   const SenkyoMenuScreen({super.key});
@@ -84,6 +85,16 @@ class SenkyoMenuScreen extends StatelessWidget {
             const SizedBox(height: 32),
             _buildSectionTag(context, '取決表'),
             const SizedBox(height: 8),
+            _buildMenuButton(
+              context,
+              label: '野外奉仕取決表',
+              icon: Icons.directions_walk,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FieldServiceTableScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
             _buildMenuButton(
               context,
               label: '公共エリア伝道',
