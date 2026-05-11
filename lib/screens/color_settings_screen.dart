@@ -20,36 +20,36 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   late Color _logoOnDark;
 
   static const _primaryPresets = [
-    Color(0xFF047CBC),
-    Color(0xFF1565C0),
-    Color(0xFF2E7D32),
-    Color(0xFF6A1B9A),
-    Color(0xFFAD1457),
-    Color(0xFFE65100),
-    Color(0xFF37474F),
-    Color(0xFF000000),
+    Color(0xFF64B5F6), // 淡い青
+    Color(0xFF7986CB), // 淡い藍
+    Color(0xFF81C784), // 淡い緑
+    Color(0xFFBA68C8), // 淡い紫
+    Color(0xFFF06292), // 淡いピンク
+    Color(0xFFFFB74D), // 淡いオレンジ
+    Color(0xFF90A4AE), // 淡いグレー
+    Color(0xFF607D8B), // 少し濃いめのグレー
   ];
 
   static const _accentPresets = [
-    Color(0xFFF1C232),
-    Color(0xFFFF6F00),
-    Color(0xFFF44336),
-    Color(0xFF4CAF50),
-    Color(0xFF00BCD4),
-    Color(0xFFE91E63),
-    Color(0xFF9C27B0),
-    Color(0xFF607D8B),
+    Color(0xFFFFE082), // 淡い黄
+    Color(0xFFFFCC80), // 淡いオレンジ
+    Color(0xFFEF9A9A), // 淡い赤
+    Color(0xFFA5D6A7), // 淡い緑
+    Color(0xFF80DEEA), // 淡い水色
+    Color(0xFFF48FB1), // 淡いピンク
+    Color(0xFFCE93D8), // 淡い紫
+    Color(0xFFB0BEC5), // 淡い青灰
   ];
 
   static const _textPresets = [
-    Color(0xFF047CBC),
-    Color(0xFF1565C0),
-    Color(0xFF2E7D32),
-    Color(0xFF6A1B9A),
-    Color(0xFFAD1457),
-    Color(0xFFE65100),
-    Color(0xFF37474F),
-    Color(0xFF000000),
+    Color(0xFF64B5F6),
+    Color(0xFF7986CB),
+    Color(0xFF81C784),
+    Color(0xFFBA68C8),
+    Color(0xFFF06292),
+    Color(0xFFFFB74D),
+    Color(0xFF90A4AE),
+    Color(0xFF607D8B),
   ];
 
   @override
