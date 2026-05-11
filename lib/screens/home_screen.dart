@@ -203,12 +203,13 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildHomeListMenu(BuildContext context, List<MenuItem> items, bool isAdmin) {
     final cs = Theme.of(context).colorScheme;
-    final rows = <Widget>[];
+    final tiles = <Widget>[];
     for (var i = 0; i < items.length; i++) {
-      rows.add(_buildListRow(context, items[i], isFirst: i == 0, isLast: !isAdmin && i == items.length - 1));
+      tiles.add(_buildTile(context, items[i]));
+      tiles.add(const SizedBox(height: 12));
     }
     if (isAdmin) {
-      rows.add(_buildListRow(
+      tiles.add(_buildTile(
         context,
         MenuItem(
           label: '管理画面',
@@ -217,46 +218,30 @@ class HomeScreen extends StatelessWidget {
           color: cs.secondary,
         ),
         isAdminRow: true,
-        isLast: true,
       ));
+    } else if (tiles.isNotEmpty) {
+      tiles.removeLast(); // 末尾の余白を削除
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.primary, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: cs.primary.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Column(children: rows),
-      ),
-    );
+    return Column(children: tiles);
   }
 
-  Widget _buildListRow(
+  Widget _buildTile(
     BuildContext context,
     MenuItem item, {
-    bool isFirst = false,
-    bool isLast = false,
     bool isAdminRow = false,
   }) {
     final cs = Theme.of(context).colorScheme;
     final bool isEnabled = item.destination != null || item.onTapOverride != null;
     const Color adminColor = Color(0xFFF1C232);
-    final Color rowColor = isAdminRow
+    final Color tileColor = isAdminRow
         ? adminColor
         : (isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400);
 
     return Material(
-      color: Colors.transparent,
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      elevation: 0,
       child: InkWell(
         onTap: isEnabled
             ? () {
@@ -270,29 +255,32 @@ class HomeScreen extends StatelessWidget {
                 }
               }
             : null,
-        splashColor: rowColor.withOpacity(0.12),
-        highlightColor: rowColor.withOpacity(0.06),
-        child: Container(
+        borderRadius: BorderRadius.circular(14),
+        splashColor: tileColor.withOpacity(0.12),
+        highlightColor: tileColor.withOpacity(0.06),
+        child: Ink(
           decoration: BoxDecoration(
-            border: Border(
-              top: isAdminRow
-                  ? BorderSide(color: adminColor.withOpacity(0.3), width: 2)
-                  : BorderSide.none,
-              bottom: isLast
-                  ? BorderSide.none
-                  : BorderSide(color: cs.primary.withOpacity(0.12), width: 1),
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: tileColor, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: tileColor.withOpacity(0.22),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           child: Row(
             children: [
               item.iconData != null
-                  ? Icon(item.iconData, size: 30, color: rowColor)
+                  ? Icon(item.iconData, size: 30, color: tileColor)
                   : Image.asset(
                       item.iconAsset,
                       width: 30,
                       height: 30,
-                      color: rowColor,
+                      color: tileColor,
                     ),
               const SizedBox(width: 18),
               Expanded(
@@ -301,14 +289,14 @@ class HomeScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: rowColor,
+                    color: tileColor,
                   ),
                 ),
               ),
               Icon(
                 Icons.chevron_right,
                 size: 24,
-                color: rowColor.withOpacity(0.5),
+                color: tileColor.withOpacity(0.5),
               ),
             ],
           ),
