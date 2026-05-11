@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../providers/sheets_provider.dart';
+import '../providers/theme_provider.dart';
 
 /// ログイン画面
 class LoginScreen extends StatefulWidget {
@@ -116,13 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/APP_LOGO.png',
+              SvgPicture.asset(
+                'assets/APP_LOGO.svg',
                 width: 280,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.account_circle,
-                  size: 100,
-                  color: Colors.grey,
+                colorFilter: ColorFilter.mode(
+                  context.watch<ThemeProvider>().logoColor,
+                  BlendMode.srcIn,
                 ),
               ),
               const SizedBox(height: 48),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
@@ -133,14 +134,18 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!_initialized || isAuthenticating) {
       // ロゴを固定サイズのSizedBoxで囲むことでレイアウトジャンプを防ぐ
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: SizedBox(
             width: 240,
             height: 240,
-            child: Image(
-              image: AssetImage('assets/APP_LOGO.png'),
+            child: SvgPicture.asset(
+              'assets/APP_LOGO.svg',
               fit: BoxFit.contain,
+              colorFilter: ColorFilter.mode(
+                context.watch<ThemeProvider>().logoColor,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),

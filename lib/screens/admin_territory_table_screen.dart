@@ -70,28 +70,56 @@ class _AdminTerritoryTableScreenState extends State<AdminTerritoryTableScreen> {
       return const Center(child: Text('データがありません'));
     }
 
+    final sorted = List<Map<String, dynamic>>.from(_rows)
+      ..sort((a, b) {
+        final na = int.tryParse(a['territory']?.toString() ?? '');
+        final nb = int.tryParse(b['territory']?.toString() ?? '');
+        if (na != null && nb != null) return na.compareTo(nb);
+        return (a['territory']?.toString() ?? '').compareTo(b['territory']?.toString() ?? '');
+      });
+
+    const labelStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
+    const cellStyle = TextStyle(fontSize: 12);
+    const padding = EdgeInsets.symmetric(horizontal: 6, vertical: 8);
+
+    Widget cell(String text, {bool bold = false}) => Padding(
+      padding: padding,
+      child: Text(text, style: bold ? labelStyle : cellStyle, textAlign: TextAlign.center),
+    );
+
+    TableRow buildRow(String label, String Function(Map<String, dynamic>) value, {Color? bg}) {
+      return TableRow(
+        decoration: bg != null ? BoxDecoration(color: bg) : null,
+        children: [
+          cell(label, bold: true),
+          ...sorted.map((r) => cell(value(r))),
+        ],
+      );
+    }
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(primary.withOpacity(0.1)),
-          border: TableBorder.all(color: Colors.grey.shade300, width: 1),
-          columnSpacing: 24,
-          columns: const [
-            DataColumn(label: Text('区域番号', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('監督名', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('開始日付', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('終了日付', style: TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: _rows.map((row) {
-            return DataRow(cells: [
-              DataCell(Text(row['territory'] as String? ?? '')),
-              DataCell(Text(row['supervisorName'] as String? ?? '')),
-              DataCell(Text(row['startDate'] as String? ?? '')),
-              DataCell(Text(row['endDate'] as String? ?? '')),
-            ]);
-          }).toList(),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Table(
+            border: TableBorder.all(color: Colors.grey.shade300, width: 1),
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            children: [
+              // ヘッダー行: 区域番号
+              TableRow(
+                decoration: BoxDecoration(color: primary.withOpacity(0.15)),
+                children: [
+                  cell('', bold: true),
+                  ...sorted.map((r) => cell(r['territory']?.toString() ?? '', bold: true)),
+                ],
+              ),
+              buildRow('名前', (r) => r['supervisorName']?.toString() ?? ''),
+              buildRow('開始', (r) => r['startDate']?.toString() ?? '',
+                  bg: primary.withOpacity(0.05)),
+              buildRow('終了', (r) => r['endDate']?.toString() ?? ''),
+            ],
+          ),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../services/sheets_service.dart';
 import '../services/api_service.dart';
@@ -691,30 +692,16 @@ class SheetsProvider extends ChangeNotifier {
         groupName, territoryNumber, isNight: isNight,
       );
       final result = <String, String>{};
-      final latestTimestamps = <String, DateTime>{};
 
       for (final a in assignments) {
         final cardName = FirestoreService.cardNameFromDoc(a);
-        final memberName = a['memberName'] as String? ?? '';
-        final ts = a['timestamp'];
-        DateTime? rowTime;
-        if (ts is DateTime) rowTime = ts;
+        final memberName = a['memberName']?.toString() ?? '';
 
-        if (memberName.isEmpty) continue;
+        if (cardName.isEmpty || memberName.isEmpty) continue;
 
-        bool shouldUpdate = false;
+        // FirestoreService 側でタイムスタンプ比較済みのため、そのまま採用
         if (!result.containsKey(cardName)) {
-          shouldUpdate = true;
-        } else {
-          final existing = latestTimestamps[cardName];
-          if (rowTime != null && (existing == null || rowTime.isAfter(existing))) {
-            shouldUpdate = true;
-          }
-        }
-
-        if (shouldUpdate) {
           result[cardName] = memberName;
-          if (rowTime != null) latestTimestamps[cardName] = rowTime;
         }
       }
       return result;

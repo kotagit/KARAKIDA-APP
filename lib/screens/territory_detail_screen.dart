@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../providers/sheets_provider.dart';
+import '../providers/theme_provider.dart';
 import 'sheet_view_screen.dart';
 
 class TerritoryDetailScreen extends StatefulWidget {
@@ -351,7 +353,15 @@ class _TerritoryDetailScreenState extends State<TerritoryDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       child: Row(
                         children: [
-                          Image.asset('assets/APP_LOGO_02.png', width: 28, height: 28),
+                          SvgPicture.asset(
+                            'assets/APP_LOGO.svg',
+                            width: 28,
+                            height: 28,
+                            colorFilter: ColorFilter.mode(
+                              context.watch<ThemeProvider>().logoColor,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(

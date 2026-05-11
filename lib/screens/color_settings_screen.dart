@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../providers/theme_provider.dart';
@@ -15,6 +16,8 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   late Color _primary;
   late Color _accent;
   late Color _text;
+  late Color _logo;
+  late Color _logoOnDark;
 
   static const _primaryPresets = [
     Color(0xFF047CBC),
@@ -56,27 +59,41 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
     _primary = tp.primaryColor;
     _accent = tp.accentColor;
     _text = tp.textColor;
+    _logo = tp.logoColor;
+    _logoOnDark = tp.logoColorOnDark;
   }
 
-  void _updateColor({Color? primary, Color? accent, Color? text}) {
+  void _updateColor({Color? primary, Color? accent, Color? text, Color? logo, Color? logoOnDark}) {
     if (primary != null) setState(() => _primary = primary);
     if (accent != null) setState(() => _accent = accent);
     if (text != null) setState(() => _text = text);
+    if (logo != null) setState(() => _logo = logo);
+    if (logoOnDark != null) setState(() => _logoOnDark = logoOnDark);
     context.read<ThemeProvider>().updateColors(
       primaryColor: primary,
       accentColor: accent,
       textColor: text,
+      logoColor: logo,
+      logoColorOnDark: logoOnDark,
     );
   }
 
   Future<void> _save() async {
     final email = context.read<SheetsProvider>().currentUserEmail;
     if (email == null) return;
-    await context.read<ThemeProvider>().saveSettings(email: email);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存しました')),
-      );
+    try {
+      await context.read<ThemeProvider>().saveSettings(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保存しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存に失敗しました: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -85,6 +102,8 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
       primary: const Color(0xFF047CBC),
       accent: const Color(0xFFF1C232),
       text: const Color(0xFF047CBC),
+      logo: const Color(0xFF047CBC),
+      logoOnDark: Colors.white,
     );
   }
 
@@ -163,6 +182,35 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 title: 'アクセントカラー',
                 current: _accent,
                 onChanged: (c) => _updateColor(accent: c),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSection(
+              label: 'ロゴカラー（白背景）',
+              description: 'ログイン・カード内などのロゴの色',
+              selected: _logo,
+              presets: _primaryPresets,
+              onSelected: (c) => _updateColor(logo: c),
+              onCustom: () => _showColorPicker(
+                title: 'ロゴカラー（白背景）',
+                current: _logo,
+                onChanged: (c) => _updateColor(logo: c),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSection(
+              label: 'ロゴカラー（有色背景）',
+              description: 'AppBarなど有色背景上のロゴの色',
+              selected: _logoOnDark,
+              presets: [
+                Colors.white,
+                ..._primaryPresets,
+              ],
+              onSelected: (c) => _updateColor(logoOnDark: c),
+              onCustom: () => _showColorPicker(
+                title: 'ロゴカラー（有色背景）',
+                current: _logoOnDark,
+                onChanged: (c) => _updateColor(logoOnDark: c),
               ),
             ),
             const SizedBox(height: 24),
@@ -288,7 +336,18 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                   color: _primary,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 ),
-                child: const Text('AppBar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/APP_LOGO.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: ColorFilter.mode(_logoOnDark, BlendMode.srcIn),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('AppBar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(12),
@@ -306,6 +365,17 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                       Icon(Icons.location_on, color: _accent, size: 20),
                       const SizedBox(width: 4),
                       const Text('住所テキスト（太字）', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ]),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      SvgPicture.asset(
+                        'assets/APP_LOGO.svg',
+                        width: 28,
+                        height: 28,
+                        colorFilter: ColorFilter.mode(_logo, BlendMode.srcIn),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('ロゴ（白背景）', style: TextStyle(fontSize: 13, color: _logo, fontWeight: FontWeight.bold)),
                     ]),
                     const SizedBox(height: 8),
                     Container(

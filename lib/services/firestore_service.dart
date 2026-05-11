@@ -906,54 +906,17 @@ class FirestoreService {
     String territoryNumber, {
     bool isNight = false,
   }) async {
+    final targetGroup = isNight ? '夜間区域' : groupName;
+    final parsedTerritoryNumber = int.tryParse(territoryNumber) ?? territoryNumber;
+
     Query<Map<String, dynamic>> query = _db
         .collection('CARD_ASSIGNMENTS')
-        .where('territoryNumber', isEqualTo: int.tryParse(territoryNumber) ?? territoryNumber);
+        .where('territoryNumber', isEqualTo: parsedTerritoryNumber);
     if (!isNight) {
-      query = query.where('groupName', isEqualTo: groupName);
+      query = query.where('groupName', isEqualTo: targetGroup);
     }
     final snap = await query.get(const GetOptions(source: Source.server));
-
-    if (snap.docs.isEmpty) return [];
-
-    // カードごとに最新の startDate を持つドキュメントを返す
-    // (全カードをまたいだ最新日でフィルタすると、一部カードだけ更新した際に
-    //  他のカードの割当てが取得されなくなるため、カード単位で最新を選択する)
-    final latestByCard = <String, Map<String, dynamic>>{};
-    final latestDateByCard = <String, DateTime>{};
-    final latestTsByCard = <String, Timestamp>{};
-
-    for (final doc in snap.docs) {
-      final data = doc.data();
-      final cardName = cardNameFromDoc(data);
-      if (cardName.isEmpty) continue;
-
-      final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
-      final date = _parseDate(sdStr);
-      final ts = data['timestamp'];
-      final rowTs = ts is Timestamp ? ts : null;
-
-      if (!latestByCard.containsKey(cardName)) {
-        latestByCard[cardName] = data;
-        if (date != null) latestDateByCard[cardName] = date;
-        if (rowTs != null) latestTsByCard[cardName] = rowTs;
-      } else {
-        final existingDate = latestDateByCard[cardName];
-        final existingTs = latestTsByCard[cardName];
-        final dateIsNewer = date != null && (existingDate == null || date.isAfter(existingDate));
-        final datesEqual = date != null && existingDate != null &&
-            !date.isAfter(existingDate) && !existingDate.isAfter(date);
-        final bothDateNull = date == null && existingDate == null;
-        final tsIsNewer = rowTs != null && (existingTs == null || rowTs.compareTo(existingTs) > 0);
-        if (dateIsNewer || ((datesEqual || bothDateNull) && tsIsNewer)) {
-          latestByCard[cardName] = data;
-          if (date != null) latestDateByCard[cardName] = date;
-          if (rowTs != null) latestTsByCard[cardName] = rowTs;
-        }
-      }
-    }
-
-    return latestByCard.values.toList();
+    return snap.docs.map((d) => d.data()).toList();
   }
 
   static Future<List<String>> getAssignedCardNamesForUser(String userName) async {
@@ -964,64 +927,10 @@ class FirestoreService {
 
     if (snap.docs.isEmpty) return [];
 
-    // 1. 各カード名ごとに最新の startDate を特定する
-    final latestDatePerCard = <String, DateTime>{};
-    final latestStrPerCard = <String, String>{};
-
-    for (final doc in snap.docs) {
-      final data = doc.data();
-      final cardName = cardNameFromDoc(data);
-      final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
-      final date = _parseDate(sdStr);
-
-      if (cardName.isEmpty || date == null) continue;
-
-      if (!latestDatePerCard.containsKey(cardName) || date.isAfter(latestDatePerCard[cardName]!)) {
-        latestDatePerCard[cardName] = date;
-        latestStrPerCard[cardName] = sdStr!;
-      }
-    }
-
-    // 2. 各カードの最新日付に一致するものだけを抽出
-    final cardNames = <String>{};
-    for (final doc in snap.docs) {
-      final data = doc.data();
-      final cardName = cardNameFromDoc(data);
-      final sdStr = (data['startDate'] ?? data['start_date'])?.toString().trim();
-
-      if (cardName.isNotEmpty && sdStr != null && sdStr == latestStrPerCard[cardName]) {
-        cardNames.add(cardName);
-      }
-    }
-
-    // フォールバック: startDate が全くない古いデータがある場合
-    if (cardNames.isEmpty) {
-      final latestByTs = <String, Map<String, dynamic>>{};
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        final cardName = cardNameFromDoc(data);
-        if (cardName.isEmpty) continue;
-        final ts = data['timestamp'] as Timestamp?;
-        
-        final existingTs = latestByTs[cardName]?['timestamp'] as Timestamp?;
-        bool shouldUpdate = false;
-        
-        if (!latestByTs.containsKey(cardName)) {
-          shouldUpdate = true;
-        } else if (ts != null) {
-          if (existingTs == null || ts.compareTo(existingTs) > 0) {
-            shouldUpdate = true;
-          }
-        }
-
-        if (shouldUpdate) {
-          latestByTs[cardName] = data;
-        }
-      }
-      return latestByTs.keys.toList();
-    }
-
-    return cardNames.toList();
+    return snap.docs
+        .map((d) => cardNameFromDoc(d.data()))
+        .where((n) => n.isNotEmpty)
+        .toList();
   }
 
   /// グループ区域に設定されたカード名一覧を取得（memberName == 'グループ区域'）
@@ -1110,17 +1019,44 @@ class FirestoreService {
     final parts = normalized.split('-');
     final areaId = parts[0];
     final sheetId = parts.length > 1 ? parts[1] : '1';
-    final safeDate = startDate != null ? '_${startDate.replaceAll('/', '_')}' : '';
-    final docId = '${groupName}_${areaId}_$sheetId$safeDate';
-    await _db.collection('CARD_ASSIGNMENTS').doc(docId).set({
+    final latestDocId = '${groupName}_${areaId}_$sheetId';
+
+    final newData = {
       'groupName': groupName,
-      'territoryNumber': areaId,
+      'territoryNumber': int.tryParse(areaId) ?? areaId,
       'cardName': int.tryParse(sheetId) ?? sheetId,
       'memberName': memberName,
       'startDate': startDate,
       'endDate': endDate,
       'timestamp': FieldValue.serverTimestamp(),
-    });
+    };
+
+    // テリトリーナンバーとカードナンバーで既存ドキュメントを検索し
+    // 新しい担当者の保存時刻より古いものをHISTORYへ移動
+    final now = DateTime.now();
+    final existingSnap = await _db
+        .collection('CARD_ASSIGNMENTS')
+        .where('groupName', isEqualTo: groupName)
+        .where('territoryNumber', isEqualTo: int.tryParse(areaId) ?? areaId)
+        .where('cardName', isEqualTo: int.tryParse(sheetId) ?? sheetId)
+        .get(const GetOptions(source: Source.server));
+
+    final tsMillis = now.millisecondsSinceEpoch;
+    final moveBatch = _db.batch();
+    int moveCount = 0;
+    for (int i = 0; i < existingSnap.docs.length; i++) {
+      final doc = existingSnap.docs[i];
+      final docTs = doc.data()['timestamp'];
+      final docTime = docTs is Timestamp ? docTs.toDate() : null;
+      if (docTime == null || docTime.isBefore(now)) {
+        final historyDocId = '${groupName}_${areaId}_${sheetId}_${tsMillis + i}';
+        moveBatch.set(_db.collection('CARD_ASSIGNMENTS_HISTORY').doc(historyDocId), doc.data());
+        moveBatch.delete(doc.reference);
+        moveCount++;
+      }
+    }
+    if (moveCount > 0) await moveBatch.commit();
+    await _db.collection('CARD_ASSIGNMENTS').doc(latestDocId).set(newData);
   }
 
   static Future<void> saveAssignmentsBatch(
@@ -1144,48 +1080,82 @@ class FirestoreService {
 
     while (retryCount <= maxRetries) {
       try {
-        final batch = _db.batch();
-        int addedCount = 0;
-        
+        // バッチに含めるカード情報を収集
+        final List<({String areaId, String sheetId, String memberName})> cardEntries = [];
         for (final row in rows) {
           if (row.length >= 2) {
             final cardName = row[0].toString().trim();
             final memberName = row[1].toString().trim();
-            
             if (memberName.isEmpty) continue;
-            
             final normalized = _normCardName(cardName);
             final parts = normalized.split('-');
             final areaId = parts[0];
             final sheetId = parts.length > 1 ? parts[1] : '1';
-
-            // 1. 履歴保持用（ミリ秒タイムスタンプで毎回ユニーク）
-            final tsMillis = DateTime.now().millisecondsSinceEpoch;
-            final historyDocId = '${targetGroup}_${areaId}_${sheetId}_$tsMillis';
-            // 2. 最新状態保持用
-            final latestDocId = '${targetGroup}_${areaId}_$sheetId';
-
-            final data = {
-              'groupName': targetGroup,
-              'territoryNumber': areaId,
-              'cardName': int.tryParse(sheetId) ?? sheetId,
-              'memberName': memberName,
-              'startDate': effectiveStartDate,
-              'endDate': endDate,
-              'timestamp': FieldValue.serverTimestamp(),
-            };
-
-            batch.set(_db.collection('CARD_ASSIGNMENTS').doc(historyDocId), data);
-            batch.set(_db.collection('CARD_ASSIGNMENTS').doc(latestDocId), data);
-            addedCount++;
+            cardEntries.add((areaId: areaId, sheetId: sheetId, memberName: memberName));
           }
         }
 
-        if (addedCount > 0) {
-          debugPrint('Firestore: Committing batch for $addedCount cards (latest + history)...');
-          await batch.commit().timeout(const Duration(seconds: 15));
-          debugPrint('Firestore: Batch commit successful');
+        if (cardEntries.isEmpty) return;
+
+        // この区域の既存ドキュメントをフィールドクエリでまとめて取得（doc IDフォーマット不問）
+        final now = DateTime.now();
+        final parsedTerritoryNumber = int.tryParse(territoryNumber) ?? territoryNumber;
+        final existingSnap = await _db
+            .collection('CARD_ASSIGNMENTS')
+            .where('groupName', isEqualTo: targetGroup)
+            .where('territoryNumber', isEqualTo: parsedTerritoryNumber)
+            .get(const GetOptions(source: Source.server));
+
+        // cardName ごとに既存ドキュメントをグループ化
+        final existingByCard = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+        for (final doc in existingSnap.docs) {
+          final data = doc.data();
+          final cn = int.tryParse(data['cardName']?.toString() ?? '')?.toString()
+              ?? data['cardName']?.toString()
+              ?? '';
+          if (cn.isNotEmpty) {
+            existingByCard.putIfAbsent(cn, () => []).add(doc);
+          }
         }
+
+        final batch = _db.batch();
+        final tsMillis = now.millisecondsSinceEpoch;
+
+        for (int i = 0; i < cardEntries.length; i++) {
+          final e = cardEntries[i];
+          final latestDocId = '${targetGroup}_${e.areaId}_${e.sheetId}';
+
+          // 同カードのドキュメントの中で、新しい担当者の保存時刻より古いものをHISTORYへ移動
+          final oldDocs = existingByCard[e.sheetId] ?? [];
+          for (int j = 0; j < oldDocs.length; j++) {
+            final oldDoc = oldDocs[j];
+            final docTs = oldDoc.data()['timestamp'];
+            final docTime = docTs is Timestamp ? docTs.toDate() : null;
+            if (docTime == null || docTime.isBefore(now)) {
+              final historyDocId = '${targetGroup}_${e.areaId}_${e.sheetId}_${tsMillis + i * 100 + j}';
+              batch.set(
+                _db.collection('CARD_ASSIGNMENTS_HISTORY').doc(historyDocId),
+                oldDoc.data(),
+              );
+              batch.delete(oldDoc.reference);
+            }
+          }
+
+          // 最新ドキュメントを固定IDで書き込み
+          batch.set(_db.collection('CARD_ASSIGNMENTS').doc(latestDocId), {
+            'groupName': targetGroup,
+            'territoryNumber': int.tryParse(e.areaId) ?? e.areaId,
+            'cardName': int.tryParse(e.sheetId) ?? e.sheetId,
+            'memberName': e.memberName,
+            'startDate': effectiveStartDate,
+            'endDate': endDate,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+        }
+
+        debugPrint('Firestore: Committing batch for ${cardEntries.length} cards...');
+        await batch.commit().timeout(const Duration(seconds: 15));
+        debugPrint('Firestore: Batch commit successful');
         return; // 成功したら終了
       } catch (e) {
         final errorStr = e.toString().toLowerCase();
@@ -1348,14 +1318,34 @@ class FirestoreService {
 
   /// 指定カード名のみの最新割当てをドキュメントIDで直接取得（履歴ドキュメントをスキップ）
   /// ドキュメントID形式: ${groupName}_${territoryNumber}_${cardName}
+  /// 戻り値: cardName -> memberName
   static Future<Map<String, String>> getLatestAssignmentsByDocId(
+    String groupName,
+    String territoryNumber,
+    List<String> cardNames,
+  ) async {
+    final docs = await getLatestAssignmentDocsByDocId(groupName, territoryNumber, cardNames);
+    final results = <String, String>{};
+    docs.forEach((cardName, data) {
+      final memberName = data['memberName']?.toString() ?? '';
+      if (memberName.isNotEmpty) {
+        results[cardName] = memberName;
+      }
+    });
+    return results;
+  }
+
+  /// 指定カード名のみの最新割当てドキュメントをドキュメントIDで直接取得（履歴ドキュメントをスキップ）
+  /// ドキュメントID形式: ${groupName}_${territoryNumber}_${cardName}
+  /// 戻り値: cardName -> 完全なドキュメントデータ
+  static Future<Map<String, Map<String, dynamic>>> getLatestAssignmentDocsByDocId(
     String groupName,
     String territoryNumber,
     List<String> cardNames,
   ) async {
     if (cardNames.isEmpty) return {};
 
-    final results = <String, String>{};
+    final results = <String, Map<String, dynamic>>{};
 
     for (int i = 0; i < cardNames.length; i += 30) {
       final batch = cardNames.sublist(i, (i + 30).clamp(0, cardNames.length));
@@ -1383,9 +1373,8 @@ class FirestoreService {
       for (final doc in snap.docs) {
         final data = doc.data();
         final cardName = cardNameFromDoc(data);
-        final memberName = data['memberName']?.toString() ?? '';
-        if (cardName.isNotEmpty && memberName.isNotEmpty) {
-          results[cardName] = memberName;
+        if (cardName.isNotEmpty) {
+          results[cardName] = data;
         }
       }
     }
@@ -2473,12 +2462,16 @@ class FirestoreService {
     required String primaryColor,
     required String accentColor,
     required String textColor,
+    required String logoColor,
+    required String logoColorOnDark,
   }) async {
     await _db.collection('USER_SETTINGS').doc(email.toLowerCase()).set({
       'mail': email.toLowerCase(),
       'primaryColor': primaryColor,
       'accentColor': accentColor,
       'textColor': textColor,
+      'logoColor': logoColor,
+      'logoColorOnDark': logoColorOnDark,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
