@@ -348,7 +348,7 @@ class _PressableTileState extends State<_PressableTile> {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           child: widget.child,
         ),
       ),
