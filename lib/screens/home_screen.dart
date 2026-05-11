@@ -82,6 +82,17 @@ class HomeScreen extends StatelessWidget {
           iconData: Icons.palette_outlined,
           destination: ColorSettingsScreen(),
         ),
+        MenuItem(
+          label: '唐木田PORTAL',
+          iconAsset: '',
+          iconData: Icons.language,
+          onTapOverride: (context) async {
+            final uri = Uri.parse('https://karakida-app-7bbc0.web.app');
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+        ),
       ];
 
   @override
