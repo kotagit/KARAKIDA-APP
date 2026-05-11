@@ -211,16 +211,30 @@ class HomeScreen extends StatelessWidget {
         ),
     ];
 
-    final tiles = <Widget>[];
-    for (var i = 0; i < allItems.length; i++) {
-      if (i > 0) tiles.add(const SizedBox(height: 10));
-      final isAdminTile = isAdmin && i == allItems.length - 1;
-      tiles.add(Expanded(child: _buildTile(context, allItems[i], isAdminRow: isAdminTile)));
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 10.0;
+        const minTile = 56.0;
+        const maxTile = 70.0;
+        final n = allItems.length;
+        final perTile = ((constraints.maxHeight - gap * (n - 1)) / n).clamp(minTile, maxTile);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: tiles,
+        final tiles = <Widget>[];
+        for (var i = 0; i < allItems.length; i++) {
+          if (i > 0) tiles.add(const SizedBox(height: gap));
+          final isAdminTile = isAdmin && i == allItems.length - 1;
+          tiles.add(SizedBox(
+            height: perTile,
+            child: _buildTile(context, allItems[i], isAdminRow: isAdminTile),
+          ));
+        }
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: tiles,
+        );
+      },
     );
   }
 
