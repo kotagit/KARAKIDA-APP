@@ -149,10 +149,18 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
       appBar: AppBar(
         title: const Text('カラー設定', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(
-            tooltip: '初期設定に戻す',
-            icon: const Icon(Icons.refresh),
-            onPressed: _reset,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: TextButton.icon(
+              onPressed: _reset,
+              icon: const Icon(Icons.refresh, size: 18, color: Colors.white),
+              label: const Text('初期設定に戻す', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.18),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
           ),
         ],
       ),
