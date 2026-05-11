@@ -266,7 +266,7 @@ class HomeScreen extends StatelessWidget {
             child: Text(
               item.label,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: tileColor,
               ),
