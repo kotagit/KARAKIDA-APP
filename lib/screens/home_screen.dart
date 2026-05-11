@@ -238,68 +238,107 @@ class HomeScreen extends StatelessWidget {
         ? adminColor
         : (isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400);
 
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 0,
-      child: InkWell(
-        onTap: isEnabled
-            ? () {
-                if (item.onTapOverride != null) {
-                  item.onTapOverride!(context);
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => item.destination!),
-                  );
-                }
-              }
-            : null,
-        borderRadius: BorderRadius.circular(14),
-        splashColor: tileColor.withOpacity(0.12),
-        highlightColor: tileColor.withOpacity(0.06),
-        child: Ink(
+    return _PressableTile(
+      tileColor: tileColor,
+      isEnabled: isEnabled,
+      onTap: () {
+        if (item.onTapOverride != null) {
+          item.onTapOverride!(context);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => item.destination!),
+          );
+        }
+      },
+      child: Row(
+        children: [
+          item.iconData != null
+              ? Icon(item.iconData, size: 30, color: tileColor)
+              : Image.asset(
+                  item.iconAsset,
+                  width: 30,
+                  height: 30,
+                  color: tileColor,
+                ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Text(
+              item.label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: tileColor,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            size: 24,
+            color: tileColor.withOpacity(0.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PressableTile extends StatefulWidget {
+  final Color tileColor;
+  final bool isEnabled;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _PressableTile({
+    required this.tileColor,
+    required this.isEnabled,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  State<_PressableTile> createState() => _PressableTileState();
+}
+
+class _PressableTileState extends State<_PressableTile> {
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (!widget.isEnabled) return;
+    if (_pressed != v) setState(() => _pressed = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
+      onTap: widget.isEnabled ? widget.onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _pressed
+                ? widget.tileColor.withOpacity(0.06)
+                : Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: tileColor, width: 2),
+            border: Border.all(color: widget.tileColor, width: 2),
             boxShadow: [
               BoxShadow(
-                color: tileColor.withOpacity(0.22),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                color: widget.tileColor.withOpacity(_pressed ? 0.10 : 0.22),
+                blurRadius: _pressed ? 4 : 10,
+                offset: Offset(0, _pressed ? 1 : 3),
               ),
             ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-          child: Row(
-            children: [
-              item.iconData != null
-                  ? Icon(item.iconData, size: 30, color: tileColor)
-                  : Image.asset(
-                      item.iconAsset,
-                      width: 30,
-                      height: 30,
-                      color: tileColor,
-                    ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: tileColor,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 24,
-                color: tileColor.withOpacity(0.5),
-              ),
-            ],
-          ),
+          child: widget.child,
         ),
       ),
     );
