@@ -148,21 +148,6 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
       backgroundColor: const Color(0xFFF5F6F8),
       appBar: AppBar(
         title: const Text('カラー設定', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: TextButton.icon(
-              onPressed: _reset,
-              icon: const Icon(Icons.refresh, size: 18, color: Colors.white),
-              label: const Text('初期設定に戻す', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.18),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -244,6 +229,20 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.refresh, size: 20),
+                label: const Text('初期設定に戻す', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
