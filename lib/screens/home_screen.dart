@@ -205,7 +205,8 @@ class HomeScreen extends StatelessWidget {
       if (isAdmin)
         MenuItem(
           label: '管理画面',
-          iconAsset: 'assets/奉仕監督.png',
+          iconAsset: '',
+          iconData: Icons.admin_panel_settings,
           destination: const AdminScreen(),
           color: cs.secondary,
         ),
