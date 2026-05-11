@@ -283,7 +283,7 @@ class HomeScreen extends StatelessWidget {
                   : BorderSide(color: cs.primary.withOpacity(0.12), width: 1),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
           child: Row(
             children: [
               item.iconData != null
