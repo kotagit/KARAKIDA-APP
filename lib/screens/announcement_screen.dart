@@ -154,137 +154,163 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
     );
   }
 
+  static const _wd = ['日', '月', '火', '水', '木', '金', '土'];
+
   Widget _buildList(List<Map<String, dynamic>> data) {
     if (data.isEmpty) {
-      return const Center(child: Text('データがありません'));
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.article_outlined, size: 48, color: Color(0xFF999999)),
+              SizedBox(height: 8),
+              Text('発表はありません', style: TextStyle(color: Color(0xFF666666))),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 日付でグループ化（年月日（曜））
+    final groups = <String, List<Map<String, dynamic>>>{};
+    final groupOrder = <String>[];
+    for (final item in data) {
+      final DateTime d = item['date'] as DateTime;
+      final key = '${d.year}年${d.month}月${d.day}日（${_wd[d.weekday % 7]}）';
+      if (!groups.containsKey(key)) {
+        groups[key] = [];
+        groupOrder.add(key);
+      }
+      groups[key]!.add(item);
     }
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: data.length,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        itemCount: groupOrder.length,
         itemBuilder: (context, index) {
-          final item = data[index];
-          final DateTime date = item['date'] as DateTime;
-          final String dateStr =
-              '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
-          final String title = item['title'] as String;
-          final String body = item['body'] as String;
-          final List<Map<String, String>> links =
-              List<Map<String, String>>.from(item['links']);
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            elevation: 4,
-            shadowColor: Colors.black12,
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                      color: Theme.of(context).colorScheme.primary, width: 6),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.calendar_today_rounded,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 6),
-                          Text(
-                            dateStr,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (title.isNotEmpty)
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                          height: 1.2,
-                        ),
-                      ),
-                    if (body.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        body,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF475569),
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                    if (links.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: links.map((link) {
-                          final isForm = link['type'] == 'form';
-                          return ElevatedButton.icon(
-                            icon: Icon(
-                              isForm ? Icons.assignment_outlined : Icons.description_rounded,
-                              size: 18,
-                            ),
-                            label: Text(
-                              link['label']!,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isForm
-                                  ? const Color(0xFF673AB7)
-                                  : Theme.of(context).colorScheme.secondary,
-                              foregroundColor:
-                                  isForm ? Colors.white : const Color(0xFF1E293B),
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () => _openUrl(link['url']!),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          );
+          final dateKey = groupOrder[index];
+          final items = groups[dateKey]!;
+          return _buildGroup(dateKey, items);
         },
       ),
+    );
+  }
+
+  Widget _buildGroup(String dateKey, List<Map<String, dynamic>> items) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 12),
+            child: Text(
+              dateKey,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: primary,
+              ),
+            ),
+          ),
+          Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Container(
+                    width: double.infinity,
+                    color: i.isOdd ? const Color(0xFFF0F7FF) : Colors.white,
+                    padding: const EdgeInsets.all(20),
+                    child: _buildItem(items[i]),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItem(Map<String, dynamic> item) {
+    final String title = item['title'] as String;
+    final String body = item['body'] as String;
+    final links = List<Map<String, String>>.from(item['links']);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF222222),
+              ),
+            ),
+          ),
+        if (body.isNotEmpty)
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF222222),
+              height: 1.6,
+            ),
+          ),
+        if (links.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: links.map((link) {
+              final isForm = link['type'] == 'form';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: InkWell(
+                  onTap: () => _openUrl(link['url']!),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isForm ? Icons.assignment_outlined : Icons.open_in_new,
+                        size: 16,
+                        color: isForm
+                            ? const Color(0xFF673AB7)
+                            : const Color(0xFF222222),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          link['label']!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isForm
+                                ? const Color(0xFF673AB7)
+                                : const Color(0xFF222222),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 
