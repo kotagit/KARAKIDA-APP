@@ -271,7 +271,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
           child: Row(
             children: [
               item.iconData != null
