@@ -145,21 +145,26 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F8),
       appBar: AppBar(
         title: const Text('カラー設定', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          TextButton(
+          IconButton(
+            tooltip: '初期設定に戻す',
+            icon: const Icon(Icons.refresh),
             onPressed: _reset,
-            child: const Text('初期設定に戻す', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildPreview(),
+            const SizedBox(height: 20),
             _buildSection(
+              icon: Icons.format_paint,
               label: 'メインカラー',
               description: 'AppBar・ボタン・ボーダーの色',
               selected: _primary,
@@ -171,8 +176,9 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 onChanged: (c) => _updateColor(primary: c),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             _buildSection(
+              icon: Icons.auto_awesome,
               label: 'アクセントカラー',
               description: '地図アイコン・ハイライトの色',
               selected: _accent,
@@ -184,8 +190,9 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 onChanged: (c) => _updateColor(accent: c),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             _buildSection(
+              icon: Icons.image_outlined,
               label: 'ロゴカラー（白背景）',
               description: 'ログイン・カード内などのロゴの色',
               selected: _logo,
@@ -197,8 +204,9 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 onChanged: (c) => _updateColor(logo: c),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             _buildSection(
+              icon: Icons.image,
               label: 'ロゴカラー（有色背景）',
               description: 'AppBarなど有色背景上のロゴの色',
               selected: _logoOnDark,
@@ -213,8 +221,9 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 onChanged: (c) => _updateColor(logoOnDark: c),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             _buildSection(
+              icon: Icons.text_fields,
               label: 'テキストカラー',
               description: 'セクション見出し・ラベルテキストの色',
               selected: _text,
@@ -226,17 +235,17 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
                 onChanged: (c) => _updateColor(text: c),
               ),
             ),
-            const SizedBox(height: 32),
-            _buildPreview(),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: _save,
+                icon: const Icon(Icons.save, size: 20),
+                label: const Text('変更を保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('変更を保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -246,6 +255,7 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
   }
 
   Widget _buildSection({
+    required IconData icon,
     required String label,
     required String description,
     required Color selected,
@@ -254,145 +264,211 @@ class _ColorSettingsScreenState extends State<ColorSettingsScreen> {
     required VoidCallback onCustom,
   }) {
     final isCustom = !presets.any((c) => c.value == selected.value);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 2),
-        Text(description, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            ...presets.map((color) {
-              final isSelected = color.value == selected.value;
-              return GestureDetector(
-                onTap: () => onSelected(color),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.black : Colors.grey.shade300,
-                      width: isSelected ? 3 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 8)]
-                        : null,
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 20)
-                      : null,
-                ),
-              );
-            }),
-            GestureDetector(
-              onTap: onCustom,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isCustom ? selected : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isCustom ? Colors.black : Colors.grey.shade400,
-                    width: isCustom ? 3 : 1,
-                  ),
-                  boxShadow: isCustom
-                      ? [BoxShadow(color: selected.withOpacity(0.4), blurRadius: 8)]
-                      : null,
-                ),
-                child: isCustom
-                    ? const Icon(Icons.check, color: Colors.white, size: 20)
-                    : Icon(Icons.palette_outlined, color: Colors.grey.shade500, size: 20),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreview() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('プレビュー', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          child: Column(
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: _primary,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  color: selected.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/APP_LOGO.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(_logoOnDark, BlendMode.srcIn),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('AppBar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 20, color: selected),
               ),
-              Padding(
-                padding: const EdgeInsets.all(12),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      color: _primary.withOpacity(0.15),
-                      child: Text('セクション見出し', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _text)),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      Icon(Icons.location_on, color: _accent, size: 20),
-                      const SizedBox(width: 4),
-                      const Text('住所テキスト（太字）', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ]),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      SvgPicture.asset(
-                        'assets/APP_LOGO.svg',
-                        width: 28,
-                        height: 28,
-                        colorFilter: ColorFilter.mode(_logo, BlendMode.srcIn),
-                      ),
-                      const SizedBox(width: 8),
-                      Text('ロゴ（白背景）', style: TextStyle(fontSize: 13, color: _logo, fontWeight: FontWeight.bold)),
-                    ]),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('ボタン', style: TextStyle(color: Colors.white)),
-                    ),
+                    Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text(description, style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ...presets.map((color) {
+                final isSelected = color.value == selected.value;
+                return GestureDetector(
+                  onTap: () => onSelected(color),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.black87 : Colors.grey.shade300,
+                        width: isSelected ? 3 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 8)]
+                          : null,
+                    ),
+                    child: isSelected
+                        ? Icon(
+                            Icons.check,
+                            color: color.computeLuminance() > 0.7 ? Colors.black87 : Colors.white,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                );
+              }),
+              GestureDetector(
+                onTap: onCustom,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isCustom ? selected : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCustom ? Colors.black87 : Colors.grey.shade400,
+                      width: isCustom ? 3 : 1,
+                    ),
+                    boxShadow: isCustom
+                        ? [BoxShadow(color: selected.withOpacity(0.4), blurRadius: 8)]
+                        : null,
+                  ),
+                  child: isCustom
+                      ? Icon(
+                          Icons.check,
+                          color: selected.computeLuminance() > 0.7 ? Colors.black87 : Colors.white,
+                          size: 20,
+                        )
+                      : Icon(Icons.colorize, color: Colors.grey.shade500, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreview() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.visibility_outlined, size: 18, color: Colors.grey.shade700),
+              const SizedBox(width: 6),
+              const Text('プレビュー', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    color: _primary,
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/APP_LOGO.svg',
+                          width: 22,
+                          height: 22,
+                          colorFilter: ColorFilter.mode(_logoOnDark, BlendMode.srcIn),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('AppBar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          color: _primary.withOpacity(0.15),
+                          child: Text('セクション見出し', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _text)),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          Icon(Icons.location_on, color: _accent, size: 20),
+                          const SizedBox(width: 4),
+                          const Text('住所テキスト（太字）', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ]),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          SvgPicture.asset(
+                            'assets/APP_LOGO.svg',
+                            width: 26,
+                            height: 26,
+                            colorFilter: ColorFilter.mode(_logo, BlendMode.srcIn),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('ロゴ（白背景）', style: TextStyle(fontSize: 13, color: _logo, fontWeight: FontWeight.bold)),
+                        ]),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text('ボタン', style: TextStyle(color: Colors.white, fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
