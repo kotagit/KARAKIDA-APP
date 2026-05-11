@@ -64,9 +64,28 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
               links.add({
                 'url': l['url'].toString(),
                 'label': (l['title'] ?? '資料を開く').toString(),
+                'type': 'link',
               });
             }
           }
+        }
+        // レガシーフィールド（link1_*, link2_*）
+        for (final n in ['1', '2']) {
+          final url = (d['link${n}_url'] ?? '').toString();
+          final title = (d['link${n}_title'] ?? '').toString();
+          if (url.isNotEmpty) {
+            links.add({'url': url, 'label': title.isEmpty ? '資料を開く' : title, 'type': 'link'});
+          }
+        }
+        // Googleフォーム
+        final gfUrl = (d['googleFormUrl'] ?? '').toString();
+        if (gfUrl.isNotEmpty) {
+          final gfTitle = (d['googleFormTitle'] ?? '').toString();
+          links.add({
+            'url': gfUrl,
+            'label': gfTitle.isEmpty ? 'Googleフォーム' : gfTitle,
+            'type': 'form',
+          });
         }
 
         final item = {
@@ -230,29 +249,33 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: links
-                            .map((link) => ElevatedButton.icon(
-                                  icon: const Icon(Icons.description_rounded,
-                                      size: 18),
-                                  label: Text(
-                                    link['label']!,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.secondary,
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  onPressed: () => _openUrl(link['url']!),
-                                ))
-                            .toList(),
+                        children: links.map((link) {
+                          final isForm = link['type'] == 'form';
+                          return ElevatedButton.icon(
+                            icon: Icon(
+                              isForm ? Icons.assignment_outlined : Icons.description_rounded,
+                              size: 18,
+                            ),
+                            label: Text(
+                              link['label']!,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isForm
+                                  ? const Color(0xFF673AB7)
+                                  : Theme.of(context).colorScheme.secondary,
+                              foregroundColor:
+                                  isForm ? Colors.white : const Color(0xFF1E293B),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => _openUrl(link['url']!),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ],
