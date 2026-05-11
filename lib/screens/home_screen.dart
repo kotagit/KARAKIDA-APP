@@ -126,51 +126,14 @@ class HomeScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          const double padding = 16;
-          const double spacing = 12;
-          const int columns = 3;
-          final tileSize = (constraints.maxWidth - padding * 2 - spacing * (columns - 1)) / columns;
-          return Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.0,
-              ),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                return _buildMenuCard(context, item);
-              },
-            ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: _buildHomeListMenu(context, menuItems, sheets.isAdmin),
           ),
-          if (sheets.isAdmin)
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: SizedBox(
-                width: tileSize,
-                height: tileSize,
-                child: _buildMenuCard(
-                  context,
-                  MenuItem(
-                    label: '管理画面',
-                    iconAsset: 'assets/奉仕監督.png',
-                    destination: const AdminScreen(),
-                    color: cs.secondary,
-                  ),
-                ),
-              ),
-            ),
-        ],
-          );
-        },
+        ),
       ),
       bottomNavigationBar: Container(
         color: cs.primary,
@@ -244,81 +207,117 @@ class HomeScreen extends StatelessWidget {
   }
 
 
-  Widget _buildMenuCard(BuildContext context, MenuItem item) {
-    final bool isEnabled = item.destination != null || item.onTapOverride != null;
+  Widget _buildHomeListMenu(BuildContext context, List<MenuItem> items, bool isAdmin) {
     final cs = Theme.of(context).colorScheme;
-    final Color activeColor = isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400;
-
-    return GestureDetector(
-      onTap: isEnabled
-          ? () {
-              if (item.onTapOverride != null) {
-                item.onTapOverride!(context);
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => item.destination!),
-                );
-              }
-            }
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: isEnabled
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.white, Colors.grey.shade50],
-                )
-              : null,
-          color: isEnabled ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade300,
-            width: 3,
-          ),
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: (item.color ?? cs.primary).withOpacity(0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.8),
-                    blurRadius: 4,
-                    offset: const Offset(0, -1),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+    final rows = <Widget>[];
+    for (var i = 0; i < items.length; i++) {
+      rows.add(_buildListRow(context, items[i], isFirst: i == 0, isLast: !isAdmin && i == items.length - 1));
+    }
+    if (isAdmin) {
+      rows.add(_buildListRow(
+        context,
+        MenuItem(
+          label: '管理画面',
+          iconAsset: 'assets/奉仕監督.png',
+          destination: const AdminScreen(),
+          color: cs.secondary,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            item.iconData != null
-                ? Icon(item.iconData, size: 40, color: activeColor)
-                : Image.asset(
-                    item.iconAsset,
-                    width: 40,
-                    height: 40,
-                    color: activeColor,
-                  ),
-            const SizedBox(height: 8),
-            Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: activeColor,
-              ),
+        isAdminRow: true,
+        isLast: true,
+      ));
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.primary, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(children: rows),
+      ),
+    );
+  }
+
+  Widget _buildListRow(
+    BuildContext context,
+    MenuItem item, {
+    bool isFirst = false,
+    bool isLast = false,
+    bool isAdminRow = false,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final bool isEnabled = item.destination != null || item.onTapOverride != null;
+    const Color adminColor = Color(0xFFF1C232);
+    final Color rowColor = isAdminRow
+        ? adminColor
+        : (isEnabled ? (item.color ?? cs.primary) : Colors.grey.shade400);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isEnabled
+            ? () {
+                if (item.onTapOverride != null) {
+                  item.onTapOverride!(context);
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => item.destination!),
+                  );
+                }
+              }
+            : null,
+        splashColor: rowColor.withOpacity(0.12),
+        highlightColor: rowColor.withOpacity(0.06),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: isAdminRow
+                  ? BorderSide(color: adminColor.withOpacity(0.3), width: 2)
+                  : BorderSide.none,
+              bottom: isLast
+                  ? BorderSide.none
+                  : BorderSide(color: cs.primary.withOpacity(0.12), width: 1),
             ),
-          ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              item.iconData != null
+                  ? Icon(item.iconData, size: 30, color: rowColor)
+                  : Image.asset(
+                      item.iconAsset,
+                      width: 30,
+                      height: 30,
+                      color: rowColor,
+                    ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: rowColor,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 24,
+                color: rowColor.withOpacity(0.5),
+              ),
+            ],
+          ),
         ),
       ),
     );
