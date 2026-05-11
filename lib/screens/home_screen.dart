@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../providers/sheets_provider.dart';
 import 'senkyo_menu_screen.dart';
-import 'application_menu_screen.dart';
 import 'announcement_screen.dart';
 import 'admin_screen.dart';
 import 'color_settings_screen.dart';
@@ -44,11 +43,6 @@ class HomeScreen extends StatelessWidget {
           label: '宣教',
           iconAsset: 'assets/宣教.png',
           destination: SenkyoMenuScreen(),
-        ),
-        const MenuItem(
-          label: '申請',
-          iconAsset: 'assets/申込み.png',
-          destination: ApplicationMenuScreen(),
         ),
         MenuItem(
           label: '支援',
